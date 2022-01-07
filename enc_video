@@ -18,7 +18,8 @@ badargs ( ) {
 	syntax="
 Syntax:
 
-    $bin [scale=<w:h|x%|keyword>] [volume=<p%|max>] <profile> <input> <output>
+    $bin [scale=<w:h|x%|keyword>] [volume=<p%|max>]
+		<profile> <input> <output>
 
 	(order of scale and volume is irrelevant)
 
