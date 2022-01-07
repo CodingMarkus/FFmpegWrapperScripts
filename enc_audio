@@ -4,8 +4,8 @@ set -e
 
 
 noffmpeg ( ) {
-	echo "ffmpeg not found in \$PATH!" >&2
-	exit 1
+    echo "ffmpeg not found in \$PATH!" >&2
+    exit 1
 }
 
 
@@ -14,8 +14,8 @@ command -v ffmpeg >/dev/null || noffmpeg
 
 
 badargs ( ) {
-	bin="./$(basename "$0")"
-	syntax="
+    bin="./$(basename "$0")"
+    syntax="
 Syntax:
 
     $bin [volume=<p%|max>] <profile> <input> <output>
@@ -23,31 +23,31 @@ Syntax:
 
 Valid profile names are:
 
-	mp3poor - Variable bitrate MP3, poor quality.
-	mp3low  - Variable bitrate MP3, low quality.
+    mp3poor - Variable bitrate MP3, poor quality.
+    mp3low  - Variable bitrate MP3, low quality.
     mp3std  - Variable bitrate MP3, standard quality.
-	mp3high - Variable bitrate MP3, high quality.
+    mp3high - Variable bitrate MP3, high quality.
 
-	aacpoor - Variable bitrate AAC, poor quality.
-	aaclow  - Variable bitrate AAC, low quality.
+    aacpoor - Variable bitrate AAC, poor quality.
+    aaclow  - Variable bitrate AAC, low quality.
     aacstd  - Variable bitrate AAC, standard quality.
-	aachigh - Variable bitrate AAC, high quality.
+    aachigh - Variable bitrate AAC, high quality.
 
-	aacarc   - AAC with quality good enough for archiving music.
-	archive  - FLAC lossless compression, suitable for archiving music.
+    aacarc   - AAC with quality good enough for archiving music.
+    archive  - FLAC lossless compression, suitable for archiving music.
 
-	speechlow  - Speech only, low quality (AAC HE mono).
-	speechstd  - Speech only, standard quality (AAC HE mono).
-	speechhigh - Speech only, high quality (AAC HE mono).
+    speechlow  - Speech only, low quality (AAC HE mono).
+    speechstd  - Speech only, standard quality (AAC HE mono).
+    speechhigh - Speech only, high quality (AAC HE mono).
 
-	webcast       - Webcast with low bitrate (Vorbis mono).
-	webcasthigh   - Webcast with higher bitrate (Vorbis mono).
-	webcasthq     - Webcast with low bitrate (Opus mono).
-	webcasthqhigh - Webcast with higher bitrate (Opus mono).
+    webcast       - Webcast with low bitrate (Vorbis mono).
+    webcasthigh   - Webcast with higher bitrate (Vorbis mono).
+    webcasthq     - Webcast with low bitrate (Opus mono).
+    webcasthqhigh - Webcast with higher bitrate (Opus mono).
 
-	transform - Copy audio data unmodified, just rewrite container.
+    transform - Copy audio data unmodified, just rewrite container.
 
-	fixaac - Fix broken AAC streams with bad timing or bad average bitrate
+    fixaac - Fix broken AAC streams with bad timing or bad average bitrate
              that transform cannot fix. All meta information will be lost!
 
 
@@ -62,8 +62,8 @@ The container format is guessed by the file extension of the output file. E.g.
 MP3 container, and \".aac\" a raw AAC data stream. Note that not all codecs can
 be used in all container formats.
 "
-	printf "%s" "$syntax" >&2
-	exit 1
+    printf "%s" "$syntax" >&2
+    exit 1
 }
 
 
@@ -75,68 +75,68 @@ outfile=""
 
 while [ -z "$outfile" ]
 do
-	if [ $# -lt 3 ]
-	then
-		badargs
-	fi
+    if [ $# -lt 3 ]
+    then
+        badargs
+    fi
 
-	case "$1" in
+    case "$1" in
 
-		"volume="*)
-			volume="$1"
-			shift
-		;;
+        "volume="*)
+            volume="$1"
+            shift
+        ;;
 
-		*)
-			profile="$1"
-			infile="$2"
-			outfile="$3"
-		;;
-	esac
+        *)
+            profile="$1"
+            infile="$2"
+            outfile="$3"
+        ;;
+    esac
 done
 
 
 case "$volume" in
 
-	"")
-		# No volume set - fine
-	;;
+    "")
+        # No volume set - fine
+    ;;
 
-	"volume=max")
-		volume=$(ffmpeg -i "$infile" -filter:a volumedetect \
-				-f null /dev/null 2>&1                      \
-			| grep max_volume | sed -E 's/.*max_volume: -([0-9.]+) dB$/\1/'
-		)
-		volume="volume=$volume"
-	;;
+    "volume=max")
+        volume=$(ffmpeg -i "$infile" -filter:a volumedetect \
+                -f null /dev/null 2>&1                      \
+            | grep max_volume | sed -E 's/.*max_volume: -([0-9.]+) dB$/\1/'
+        )
+        volume="volume=$volume"
+    ;;
 
-	"volume="*"%")
-		volume=${volume#"volume="}
-		volume=${volume%"%"}
-		volume="volume=$volume/100"
-	;;
+    "volume="*"%")
+        volume=${volume#"volume="}
+        volume=${volume%"%"}
+        volume="volume=$volume/100"
+    ;;
 
-	*)
-		volume=${volume#"volume="}
-		echo "Bad volume value \"$volume\"!" >&1
-		exit 1
-	;;
+    *)
+        volume=${volume#"volume="}
+        echo "Bad volume value \"$volume\"!" >&1
+        exit 1
+    ;;
 esac
 
 
 onexit ( ) {
-	oldtraps=$(trap)
-	oldexit=$(echo "$oldtraps" \
-		| grep "EXIT$" \
-		| sed -E 's/^trap -- (.*) EXIT$/\1/')
-	if [ -n "$oldexit" ]
-	then
-		# shellcheck disable=SC2064
-		trap "eval $oldexit ; $1" EXIT
-	else
-		# shellcheck disable=SC2064
-		trap "$1" EXIT
-	fi
+    oldtraps=$(trap)
+    oldexit=$(echo "$oldtraps" \
+        | grep "EXIT$" \
+        | sed -E 's/^trap -- (.*) EXIT$/\1/')
+    if [ -n "$oldexit" ]
+    then
+        # shellcheck disable=SC2064
+        trap "eval $oldexit ; $1" EXIT
+    else
+        # shellcheck disable=SC2064
+        trap "$1" EXIT
+    fi
 }
 
 
@@ -147,17 +147,17 @@ decargs="-vn"
 
 if [ "$volume" != "" ]
 then
-	encargs="$encargs -filter:a \"$volume\""
+    encargs="$encargs -filter:a \"$volume\""
 fi
 
 
 hascoder ( ) {
-	encfound=$(ffmpeg -encoders 2>/dev/null | grep -E "^ [^ ]+ $1 ")
-	if [ -n "$encfound" ]
-	then
-		return 0
-	fi
-	return 1
+    encfound=$(ffmpeg -encoders 2>/dev/null | grep -E "^ [^ ]+ $1 ")
+    if [ -n "$encfound" ]
+    then
+        return 0
+    fi
+    return 1
 }
 
 
@@ -165,273 +165,273 @@ hascoder ( ) {
 # ($2) - "stereo" or "mono"; default is "stereo"
 # ($3) - force HE/HEv2: "yes" or "no"; default is "no"
 activate_aac ( ) {
-	if [ "$1" -lt 16 ]
-	then
-		echo "AAC bitrate too low!" >&2
-		exit 1
-	fi
+    if [ "$1" -lt 16 ]
+    then
+        echo "AAC bitrate too low!" >&2
+        exit 1
+    fi
 
-	if [ "${2:-"stereo"}" = "mono" ]
-	then
-		encargs="$encargs -ac 1" # Convert audio to mono
-	fi
+    if [ "${2:-"stereo"}" = "mono" ]
+    then
+        encargs="$encargs -ac 1" # Convert audio to mono
+    fi
 
-	encargs="$encargs -b:a ${1}k" # Set bitrate in kbit/s
+    encargs="$encargs -b:a ${1}k" # Set bitrate in kbit/s
 
-	if [ "$1" -lt 80 ] || [ "${3:-"no"}" = "yes" ]
-	then
-		if [ "${2:-"stereo"}" = "mono" ]
-		then
-			if hascoder "aac_at"
-			then
-				encargs="$encargs -c:a aac_at" # AAC audio
-				encargs="$encargs -profile:a 4" # Use HE encoding
-				return
-			fi
+    if [ "$1" -lt 80 ] || [ "${3:-"no"}" = "yes" ]
+    then
+        if [ "${2:-"stereo"}" = "mono" ]
+        then
+            if hascoder "aac_at"
+            then
+                encargs="$encargs -c:a aac_at" # AAC audio
+                encargs="$encargs -profile:a 4" # Use HE encoding
+                return
+            fi
 
-			if hascoder "libfdk_aac"
-			then
-				encargs="$encargs -c:a libfdk_aac" # AAC audio
-				encargs="$encargs -profile:a aac_he" # Use HE encoding
-				return
-			fi
-		fi
+            if hascoder "libfdk_aac"
+            then
+                encargs="$encargs -c:a libfdk_aac" # AAC audio
+                encargs="$encargs -profile:a aac_he" # Use HE encoding
+                return
+            fi
+        fi
 
-		if hascoder "aac_at"
-		then
-			encargs="$encargs -c:a aac_at" # AAC audio
-			encargs="$encargs -profile:a 28" # Use HEv2 encoding
-			return
-		fi
+        if hascoder "aac_at"
+        then
+            encargs="$encargs -c:a aac_at" # AAC audio
+            encargs="$encargs -profile:a 28" # Use HEv2 encoding
+            return
+        fi
 
-		if hascoder "libfdk_aac"
-		then
-			encargs="$encargs -c:a libfdk_aac" # AAC audio
-			encargs="$encargs -profile:a aac_he_v2" # Use HEv2 encoding
-			return
-		fi
+        if hascoder "libfdk_aac"
+        then
+            encargs="$encargs -c:a libfdk_aac" # AAC audio
+            encargs="$encargs -profile:a aac_he_v2" # Use HEv2 encoding
+            return
+        fi
 
-		if [ "${3:-"no"}" = "yes" ]
-		then
-			echo "No encoder with HE/HEv2 support found!" >&2
-			exit 1
-		fi
-	fi
+        if [ "${3:-"no"}" = "yes" ]
+        then
+            echo "No encoder with HE/HEv2 support found!" >&2
+            exit 1
+        fi
+    fi
 
-	if hascoder "aac_at"
-	then
-		encargs="$encargs -c:a aac_at" # AAC audio
-		encargs="$encargs -aac_at_mode abr" # Set ABR mode
-		return
-	fi
+    if hascoder "aac_at"
+    then
+        encargs="$encargs -c:a aac_at" # AAC audio
+        encargs="$encargs -aac_at_mode abr" # Set ABR mode
+        return
+    fi
 
-	if hascoder "libfdk_aac"
-	then
-		encargs="$encargs -c:a libfdk_aac" # AAC audio
-		return
-	fi
+    if hascoder "libfdk_aac"
+    then
+        encargs="$encargs -c:a libfdk_aac" # AAC audio
+        return
+    fi
 
-	if hascoder "aac"
-	then
-		encargs="$encargs -c:a aac" # AAC audio
-		encargs="$encargs -aac_coder twoloop" # Tread CPU time for quality
-		return
-	fi
+    if hascoder "aac"
+    then
+        encargs="$encargs -c:a aac" # AAC audio
+        encargs="$encargs -aac_coder twoloop" # Tread CPU time for quality
+        return
+    fi
 
-	echo "No AAC encoder found!" >&2
-	exit 1
+    echo "No AAC encoder found!" >&2
+    exit 1
 }
 
 
 # $1 - vbr quality - 2 to 5, 5 being best
 activate_aacvbr ( ) {
-	if hascoder "aac_at"
-	then
-		encargs="$encargs -c:a aac_at" # AAC audio
-		encargs="$encargs -aac_at_mode vbr" # Set VBR mode
-		case "$1" in
-			"5")
-				encargs="$encargs -qscale:a 3" # Approx. libfdk level 5
-				;;
+    if hascoder "aac_at"
+    then
+        encargs="$encargs -c:a aac_at" # AAC audio
+        encargs="$encargs -aac_at_mode vbr" # Set VBR mode
+        case "$1" in
+            "5")
+                encargs="$encargs -qscale:a 3" # Approx. libfdk level 5
+                ;;
 
-			"4")
-				encargs="$encargs -qscale:a 6" # Approx. libfdk level 4
-				;;
+            "4")
+                encargs="$encargs -qscale:a 6" # Approx. libfdk level 4
+                ;;
 
-			"3")
-				encargs="$encargs -qscale:a 8" # Approx. libfdk level 3
-				;;
+            "3")
+                encargs="$encargs -qscale:a 8" # Approx. libfdk level 3
+                ;;
 
-			"2")
-				encargs="$encargs -qscale:a 9" # Approx. libfdk level 2
-				;;
+            "2")
+                encargs="$encargs -qscale:a 9" # Approx. libfdk level 2
+                ;;
 
-		esac
-		return
-	fi
+        esac
+        return
+    fi
 
-	if hascoder "libfdk_aac"
-	then
-		encargs="$encargs -c:a libfdk_aac" # AAC audio
-		encargs="$encargs -vbr $1" # Set VBR quality
-		return
-	fi
+    if hascoder "libfdk_aac"
+    then
+        encargs="$encargs -c:a libfdk_aac" # AAC audio
+        encargs="$encargs -vbr $1" # Set VBR quality
+        return
+    fi
 
-	if hascoder "aac"
-	then
-		encargs="$encargs -c:a aac" # AAC audio
-		encargs="$encargs -aac_coder twoloop" # Treat speed for quality
-		# The VBR abilities of the aac codec suck horribly, that's probably
-		# why this is still an experimental feature as of 2022. Despite
-		# producing larger files than a lower CBR rate, they still sound much
-		# worse, so with that enocder, only CBR makes sense at the moment.
-		case "$1" in
-			"5")
-				encargs="$encargs -b:a 210" # Approx. libfdk level 5
-				;;
+    if hascoder "aac"
+    then
+        encargs="$encargs -c:a aac" # AAC audio
+        encargs="$encargs -aac_coder twoloop" # Treat speed for quality
+        # The VBR abilities of the aac codec suck horribly, that's probably
+        # why this is still an experimental feature as of 2022. Despite
+        # producing larger files than a lower CBR rate, they still sound much
+        # worse, so with that enocder, only CBR makes sense at the moment.
+        case "$1" in
+            "5")
+                encargs="$encargs -b:a 210" # Approx. libfdk level 5
+                ;;
 
-			"4")
-				encargs="$encargs -b:a 140k" # Approx. libfdk level 4
-				;;
+            "4")
+                encargs="$encargs -b:a 140k" # Approx. libfdk level 4
+                ;;
 
-			"3")
-				encargs="$encargs -b:a 110k" # Approx. libfdk level 3
-				;;
+            "3")
+                encargs="$encargs -b:a 110k" # Approx. libfdk level 3
+                ;;
 
-			"2")
-				encargs="$encargs -b:a 80k"  # Approx. libfdk level 2
-				;;
+            "2")
+                encargs="$encargs -b:a 80k"  # Approx. libfdk level 2
+                ;;
 
-		esac
-		return
-	fi
+        esac
+        return
+    fi
 
-	echo "No AAC encoder found!" >&2
-	exit 1
+    echo "No AAC encoder found!" >&2
+    exit 1
 }
 
 
 
 case "$profile" in
 
-	"mp3poor")
-		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
-		encargs="$encargs -qscale:a 6" # Set VBR quality
-		encargs="$encargs -compression_level 0" # Highst compression quality
-		;;
+    "mp3poor")
+        encargs="$encargs -codec:a libmp3lame" # Set liblame codec
+        encargs="$encargs -qscale:a 6" # Set VBR quality
+        encargs="$encargs -compression_level 0" # Highst compression quality
+        ;;
 
-	"mp3low")
-		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
-		encargs="$encargs -qscale:a 4" # Set VBR quality
-		encargs="$encargs -compression_level 0" # Highst compression quality
-		;;
+    "mp3low")
+        encargs="$encargs -codec:a libmp3lame" # Set liblame codec
+        encargs="$encargs -qscale:a 4" # Set VBR quality
+        encargs="$encargs -compression_level 0" # Highst compression quality
+        ;;
 
-	"mp3std")
-		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
-		encargs="$encargs -qscale:a 2" # Set VBR quality
-		encargs="$encargs -compression_level 0" # Highst compression quality
-		;;
+    "mp3std")
+        encargs="$encargs -codec:a libmp3lame" # Set liblame codec
+        encargs="$encargs -qscale:a 2" # Set VBR quality
+        encargs="$encargs -compression_level 0" # Highst compression quality
+        ;;
 
-	"mp3high")
-		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
-		encargs="$encargs -qscale:a 0" # Set VBR quality
-		encargs="$encargs -compression_level 0" # Highst compression quality
-		;;
-
-
-
-	"aacpoor")
-		activate_aacvbr 2
-		;;
-
-	"aaclow")
-		activate_aacvbr 3
-		;;
-
-	"aacstd")
-		activate_aacvbr 4
-		;;
-
-	"aachigh")
-		activate_aacvbr 5
-		;;
+    "mp3high")
+        encargs="$encargs -codec:a libmp3lame" # Set liblame codec
+        encargs="$encargs -qscale:a 0" # Set VBR quality
+        encargs="$encargs -compression_level 0" # Highst compression quality
+        ;;
 
 
-	"aacarc")
-		if hascoder "aac_at"
-		then
-			encargs="$encargs -c:a aac_at" # AAC audio
-			encargs="$encargs -aac_at_mode vbr" # Set VBR mode
-			encargs="$encargs -qscale:a 2" # Set VBR mode
-		else
-			activate_aac 256 stereo
-		fi
-		;;
 
-	"archive")
-		encargs="$encargs -codec:a flac" # Set FLAC codec
-		encargs="$encargs -compression_level 12" # Use best compression
-		;;
+    "aacpoor")
+        activate_aacvbr 2
+        ;;
 
+    "aaclow")
+        activate_aacvbr 3
+        ;;
 
-	"speechlow")
-		activate_aac 24 mono yes
-		;;
+    "aacstd")
+        activate_aacvbr 4
+        ;;
 
-	"speechstd")
-		activate_aac 32 mono yes
-		;;
-
-	"speechhigh")
-		activate_aac 48 mono yes
-		;;
+    "aachigh")
+        activate_aacvbr 5
+        ;;
 
 
-	"webcast")
-		encargs="$encargs -c:a libvorbis" # Vorbis audio
-		encargs="$encargs -b:a 32k" # Use 24 kbit/s for audio
-		encargs="$encargs -ar 22050" # Lower sampling rate to 22050 Hz
-		encargs="$encargs -ac 1" # Convert audio to mono
-		;;
+    "aacarc")
+        if hascoder "aac_at"
+        then
+            encargs="$encargs -c:a aac_at" # AAC audio
+            encargs="$encargs -aac_at_mode vbr" # Set VBR mode
+            encargs="$encargs -qscale:a 2" # Set VBR mode
+        else
+            activate_aac 256 stereo
+        fi
+        ;;
 
-	"webcasthigh")
-		encargs="$encargs -c:a libvorbis" # Vorbis audio
-		encargs="$encargs -b:a 56k" # Use 56 kbit/s for audio
-		encargs="$encargs -ac 1" # Convert audio to mono
-		;;
-
-	"webcasthq")
-		encargs="$encargs -c:a libopus" # Opus audio
-		encargs="$encargs -b:a 24k" # Use 24 kbit/s for audio
-		encargs="$encargs -ar 24000" # Lower sampling rate to 24000 Hz
-		encargs="$encargs -ac 1" # Convert audio to mono
-		;;
-
-	"webcasthqhigh")
-		encargs="$encargs -c:a libopus" # Opus audio
-		encargs="$encargs -b:a 56k" # Use 24 kbit/s for audio
-		encargs="$encargs -ac 1" # Convert audio to mono
-		;;
+    "archive")
+        encargs="$encargs -codec:a flac" # Set FLAC codec
+        encargs="$encargs -compression_level 12" # Use best compression
+        ;;
 
 
-	"transform")
-		encargs="$encargs -c:a copy" # Copy audio data
-		;;
+    "speechlow")
+        activate_aac 24 mono yes
+        ;;
+
+    "speechstd")
+        activate_aac 32 mono yes
+        ;;
+
+    "speechhigh")
+        activate_aac 48 mono yes
+        ;;
 
 
-	"fixaac")
-		# Sometimes "transform" will already fix the stream when transforming
-		# from an AAC container to a container of the same kind but in some
-		# cases this doesn't work and then this trick will work:
-		ffmpeg -vn -i "$infile" -c:a copy -f adts - \
-			| ffmpeg -f aac -i - -c:a copy "$outfile"
-		exit 0
-		;;
+    "webcast")
+        encargs="$encargs -c:a libvorbis" # Vorbis audio
+        encargs="$encargs -b:a 32k" # Use 24 kbit/s for audio
+        encargs="$encargs -ar 22050" # Lower sampling rate to 22050 Hz
+        encargs="$encargs -ac 1" # Convert audio to mono
+        ;;
 
-	*)
-		echo "Unknown profile \"$profile\"!" >&1
-		exit 1
-	;;
+    "webcasthigh")
+        encargs="$encargs -c:a libvorbis" # Vorbis audio
+        encargs="$encargs -b:a 56k" # Use 56 kbit/s for audio
+        encargs="$encargs -ac 1" # Convert audio to mono
+        ;;
+
+    "webcasthq")
+        encargs="$encargs -c:a libopus" # Opus audio
+        encargs="$encargs -b:a 24k" # Use 24 kbit/s for audio
+        encargs="$encargs -ar 24000" # Lower sampling rate to 24000 Hz
+        encargs="$encargs -ac 1" # Convert audio to mono
+        ;;
+
+    "webcasthqhigh")
+        encargs="$encargs -c:a libopus" # Opus audio
+        encargs="$encargs -b:a 56k" # Use 24 kbit/s for audio
+        encargs="$encargs -ac 1" # Convert audio to mono
+        ;;
+
+
+    "transform")
+        encargs="$encargs -c:a copy" # Copy audio data
+        ;;
+
+
+    "fixaac")
+        # Sometimes "transform" will already fix the stream when transforming
+        # from an AAC container to a container of the same kind but in some
+        # cases this doesn't work and then this trick will work:
+        ffmpeg -vn -i "$infile" -c:a copy -f adts - \
+            | ffmpeg -f aac -i - -c:a copy "$outfile"
+        exit 0
+        ;;
+
+    *)
+        echo "Unknown profile \"$profile\"!" >&1
+        exit 1
+    ;;
 esac
 
 
@@ -440,7 +440,7 @@ of="\"$outfile\""
 
 
 callffmpeg ( ) {
-	eval "ffmpeg $*"
+    eval "ffmpeg $*"
 }
 
 callffmpeg "$decargs" -i "$if" "$encargs" "$of"
