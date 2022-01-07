@@ -7,9 +7,9 @@
 Syntax:
 
     ./enc_video [scale=<w:h|x%|keyword>] [volume=<p%|max>]
-		<profile> <input> <output>
+        <profile> <input> <output>
 
-	(order of scale and volume is irrelevant)
+    (order of scale and volume is irrelevant)
 
 
 Valid profile names are:
@@ -21,16 +21,16 @@ Valid profile names are:
     high  - High quality (H.264/AAC).
     vhigh - Very high quality (H.264/AAC).
 
-	tiny   - Tiny file size, < 1 MiByte/min (H.264/AAC).
-	vsmall - Very small file size, < 2 MiByte/min (H.264/AAC).
+    tiny   - Tiny file size, < 1 MiByte/min (H.264/AAC).
+    vsmall - Very small file size, < 2 MiByte/min (H.264/AAC).
     small  - Small file size, < 4 MiByte/min (H.264/AAC).
     medium - Medium file size, < 8 MiByte/min (H.264/AAC).
     big    - Big file size, < 12 MiByte/min (H.264/AAC).
-	vbig   - Very big file size, < 16 MiByte/min (H.264/AAC).
+    vbig   - Very big file size, < 16 MiByte/min (H.264/AAC).
 
-	scrcast   - Screencast with very low bitrate (H.264/AAC).
-	scrcasthq - Screencast with very low bitrate (H.265/AAC).
-	webcast   - Web screencast with low bitrate (VP9/Vorbis).
+    scrcast   - Screencast with very low bitrate (H.264/AAC).
+    scrcasthq - Screencast with very low bitrate (H.265/AAC).
+    webcast   - Web screencast with low bitrate (VP9/Vorbis).
 
     bug    - Screen recording for bug reporting (H.264).
     bugm   - As bug but if lots of motion is visible (H.264).
@@ -40,7 +40,7 @@ Valid profile names are:
     gif  - Animated GIF (or APNG).
     gifo - Animated GIF (or APNG) w/ optimized palette.
 
-	transform - Copy audio/video data unmodified, just rewrite container.
+    transform - Copy audio/video data unmodified, just rewrite container.
 
 
 Scale can either provide both, width (w) and height (h) or only one of both by
@@ -76,31 +76,31 @@ Syntax:
 
 Valid profile names are:
 
-	mp3poor - Variable bitrate MP3, poor quality.
-	mp3low  - Variable bitrate MP3, low quality.
+    mp3poor - Variable bitrate MP3, poor quality.
+    mp3low  - Variable bitrate MP3, low quality.
     mp3std  - Variable bitrate MP3, standard quality.
-	mp3high - Variable bitrate MP3, high quality.
+    mp3high - Variable bitrate MP3, high quality.
 
-	aacpoor - Variable bitrate AAC, poor quality.
-	aaclow  - Variable bitrate AAC, low quality.
+    aacpoor - Variable bitrate AAC, poor quality.
+    aaclow  - Variable bitrate AAC, low quality.
     aacstd  - Variable bitrate AAC, standard quality.
-	aachigh - Variable bitrate AAC, high quality.
+    aachigh - Variable bitrate AAC, high quality.
 
-	aacarc   - AAC with quality good enough for archiving music.
-	archive  - FLAC lossless compression, suitable for archiving music.
+    aacarc   - AAC with quality good enough for archiving music.
+    archive  - FLAC lossless compression, suitable for archiving music.
 
-	speechlow  - Speech only, low quality (AAC HE mono).
-	speechstd  - Speech only, standard quality (AAC HE mono).
-	speechhigh - Speech only, high quality (AAC HE mono).
+    speechlow  - Speech only, low quality (AAC HE mono).
+    speechstd  - Speech only, standard quality (AAC HE mono).
+    speechhigh - Speech only, high quality (AAC HE mono).
 
-	webcast       - Webcast with low bitrate (Vorbis mono).
-	webcasthigh   - Webcast with higher bitrate (Vorbis mono).
-	webcasthq     - Webcast with low bitrate (Opus mono).
-	webcasthqhigh - Webcast with higher bitrate (Opus mono).
+    webcast       - Webcast with low bitrate (Vorbis mono).
+    webcasthigh   - Webcast with higher bitrate (Vorbis mono).
+    webcasthq     - Webcast with low bitrate (Opus mono).
+    webcasthqhigh - Webcast with higher bitrate (Opus mono).
 
-	transform - Copy audio data unmodified, just rewrite container.
+    transform - Copy audio data unmodified, just rewrite container.
 
-	fixaac - Fix broken AAC streams with bad timing or bad average bitrate
+    fixaac - Fix broken AAC streams with bad timing or bad average bitrate
              that transform cannot fix. All meta information will be lost!
 
 
