@@ -61,8 +61,6 @@ The container format is guessed by the file extension of the output file. E.g.
 \".mp4\" generates an MPEG 4 container file, whereas \".mp3\" would generate a
 MP3 container, and \".aac\" a raw AAC data stream. Note that not all codecs can
 be used in all container formats.
-
-
 "
 	printf "%s" "$syntax" >&2
 	exit 1
