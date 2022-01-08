@@ -534,6 +534,7 @@ case "$profile" in
     ;;
 
     "bughq")
+        decargs="$decargs -an" # Don't even decode audio
         activate_h265
         encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
         encargs="$encargs -vsync vfr" # Allow varible frame rate
@@ -542,12 +543,12 @@ case "$profile" in
         encargs="$encargs -profile:v main" # Use H.265 main profile
         encargs="$encargs -level:v 6.2" # Use level 6.2
         encargs="$encargs -preset slow" # Treat time for quality
-        decargs="$decargs -an" # Don't even decode audio
         twopass=1
     ;;
 
 
     "bughqm")
+        decargs="$decargs -an" # Don't even decode audio
         activate_h265
         encargs="$encargs -fpsmax 25" # Limit FPS to 25 or below
         encargs="$encargs -vsync vfr" # Allow varible frame rate
@@ -557,7 +558,6 @@ case "$profile" in
         encargs="$encargs -level:v 6.2" # Use level 6.2
         encargs="$encargs -tune animation" # Tune animated large flat areas
         encargs="$encargs -preset slow" # Treat time for quality
-        decargs="$decargs -an" # Don't even decode audio
         twopass=1
     ;;
 
