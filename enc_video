@@ -43,13 +43,10 @@ Valid profile names are:
     vbig   - Very big file size, < 16 MiByte/min (H.264/AAC).
 
     scrcast   - Screencast with very low bitrate (H.264/AAC).
-    scrcasthq - Screencast with very low bitrate (H.265/AAC).
     webcast   - Web screencast with low bitrate (VP9/Vorbis).
 
-    bug    - Screen recording for bug reporting (H.264).
-    bugm   - As bug but if lots of motion is visible (H.264).
-    bughq  - Screen recording for bug reporting (H.265).
-    bughqm - As bughq but if lots of motion is visible (H.265).
+    bug   - Screen recording for bug reporting (H.264).
+    bughq - As bug but if lots of motion is visible (H.264).
 
     gif  - Animated GIF (or APNG).
     gifo - Animated GIF (or APNG) w/ optimized palette.
@@ -309,26 +306,6 @@ activate_aac ( )
 }
 
 
-activate_h265 ( ) {
-    if hascoder "hevc_videotoolbox"
-    then
-        encargs="$encargs -c:v hevc_videotoolbox" # H.265 video
-        encargs="$encargs -allow_sw 1" # Allow software encorder
-        return
-    fi
-
-    if hascoder "hevc"
-    then
-        encargs="$encargs -c:v hevc" # H.265 video
-        encargs="$encargs -preset slow" # Treat time for quality
-        return
-    fi
-
-    echo "No H265 encoder found!" >&2
-    exit 1
-}
-
-
 case "$profile" in
 
     "poor")
@@ -475,20 +452,6 @@ case "$profile" in
         twopass=1
     ;;
 
-    "scrcasthq")
-        activate_h265
-        encargs="$encargs -fpsmax 20" # Limit FPS to 20 or below
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 64k" # 64 kbit/s
-        encargs="$encargs -tag:v hvc1" # Apple requires that
-        encargs="$encargs -profile:v main" # Use H.265 main profile
-        encargs="$encargs -level:v 6.2" # Use level 6.2
-        encargs="$encargs -preset slow" # Treat more time for quality
-        encargs="$encargs -tune animation" # Tune animated large flat areas
-        activate_aac 24 mono yes
-        twopass=1
-    ;;
-
     "webcast")
         encargs="$encargs -c:v vp9" # vp9 video
         encargs="$encargs -fpsmax 20" # Limit FPS to 20 or below
@@ -526,7 +489,7 @@ case "$profile" in
         twopass=1
     ;;
 
-    "bugm")
+    "bughq")
         decargs="$decargs -an" # Don't even decode audio
         encargs="$encargs -c:v h264" # H.264 video
         encargs="$encargs -fpsmax 25" # Limit FPS to 25 or below
@@ -536,32 +499,6 @@ case "$profile" in
         encargs="$encargs -level:v 5.2" # Use level 5.2
         encargs="$encargs -tune animation" # Tune for animated large flat areas
         encargs="$encargs -preset veryslow" # Treat more time for quality
-        twopass=1
-    ;;
-
-    "bughq")
-        decargs="$decargs -an" # Don't even decode audio
-        activate_h265
-        encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 32k" # Use 32 kbit/s for video
-        encargs="$encargs -tag:v hvc1" # Apple requires that
-        encargs="$encargs -profile:v main" # Use H.265 main profile
-        encargs="$encargs -level:v 6.2" # Use level 6.2
-        twopass=1
-    ;;
-
-
-    "bughqm")
-        decargs="$decargs -an" # Don't even decode audio
-        activate_h265
-        encargs="$encargs -fpsmax 25" # Limit FPS to 25 or below
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 64k" # Use 64  kbit/s for video
-        encargs="$encargs -tag:v hvc1" # Apple requires that
-        encargs="$encargs -profile:v main" # Use H.265 main profile
-        encargs="$encargs -level:v 6.2" # Use level 6.2
-        encargs="$encargs -tune animation" # Tune animated large flat areas
         twopass=1
     ;;
 
