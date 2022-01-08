@@ -315,6 +315,7 @@ activate_h265 ( ) {
     if hascoder "hevc"
     then
         encargs="$encargs -c:v hevc" # H.265 video
+        encargs="$encargs -preset slow" # Treat time for quality
         return
     fi
 
@@ -542,7 +543,6 @@ case "$profile" in
         encargs="$encargs -tag:v hvc1" # Apple requires that
         encargs="$encargs -profile:v main" # Use H.265 main profile
         encargs="$encargs -level:v 6.2" # Use level 6.2
-        encargs="$encargs -preset slow" # Treat time for quality
         twopass=1
     ;;
 
@@ -557,7 +557,6 @@ case "$profile" in
         encargs="$encargs -profile:v main" # Use H.265 main profile
         encargs="$encargs -level:v 6.2" # Use level 6.2
         encargs="$encargs -tune animation" # Tune animated large flat areas
-        encargs="$encargs -preset slow" # Treat time for quality
         twopass=1
     ;;
 
