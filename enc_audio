@@ -3,7 +3,8 @@
 set -e
 
 
-noffmpeg ( ) {
+noffmpeg()
+{
     echo "ffmpeg not found in \$PATH!" >&2
     exit 1
 }
@@ -13,7 +14,8 @@ noffmpeg ( ) {
 command -v ffmpeg >/dev/null || noffmpeg
 
 
-badargs ( ) {
+badargs()
+{
     bin="./$(basename "$0")"
     syntax="
 Syntax:
@@ -124,7 +126,8 @@ case "$volume" in
 esac
 
 
-onexit ( ) {
+onexit()
+{
     oldtraps=$(trap)
     oldexit=$(echo "$oldtraps" \
         | grep "EXIT$" \
@@ -151,7 +154,8 @@ then
 fi
 
 
-hascoder ( ) {
+hascoder()
+{
     encfound=$(ffmpeg -encoders 2>/dev/null | grep -E "^ [^ ]+ $1 ")
     if [ -n "$encfound" ]
     then
@@ -164,7 +168,8 @@ hascoder ( ) {
 #  $1  - bitrate in kbit/s (must be 16 kbit/s or higher)
 # ($2) - "stereo" or "mono"; default is "stereo"
 # ($3) - force HE/HEv2: "yes" or "no"; default is "no"
-activate_aac ( ) {
+activate_aac()
+{
     if [ "$1" -lt 16 ]
     then
         echo "AAC bitrate too low!" >&2
@@ -244,7 +249,8 @@ activate_aac ( ) {
 
 
 # $1 - vbr quality - 2 to 5, 5 being best
-activate_aacvbr ( ) {
+activate_aacvbr()
+{
     if hascoder "aac_at"
     then
         encargs="$encargs -c:a aac_at" # AAC audio
@@ -439,7 +445,8 @@ if="\"$infile\""
 of="\"$outfile\""
 
 
-callffmpeg ( ) {
+callffmpeg()
+{
     eval "ffmpeg $*"
 }
 
