@@ -5,8 +5,8 @@ set -e
 
 noffmpeg()
 {
-    echo "ffmpeg not found in \$PATH!" >&2
-    exit 1
+	echo "ffmpeg not found in \$PATH!" >&2
+	exit 1
 }
 
 
@@ -16,8 +16,8 @@ command -v ffmpeg >/dev/null || noffmpeg
 
 badargs()
 {
-    bin="./$(basename "$0")"
-    syntax="
+	bin="./$(basename "$0")"
+	syntax="
 Syntax:
 
     $bin [scale=<w:h|x%|keyword>] [volume=<p%|max>]
@@ -76,8 +76,8 @@ Matroska container, and \".webm\" a WebM container. Similar using \".apng\"
 with the GIF profile creates an animated PNG file. Note that not all codecs can
 be used in all container formats.
 "
-    printf "%s" "$syntax" >&2
-    exit 1
+	printf "%s" "$syntax" >&2
+	exit 1
 }
 
 
@@ -89,85 +89,73 @@ outfile=""
 
 while [ -z "$outfile" ]
 do
-    if [ $# -lt 3 ]
-    then
-        badargs
-    fi
+	if [ $# -lt 3 ]
+	then
+		badargs
+	fi
 
-    case "$1" in
-        "scale="*)
-            scale="$1"
-            shift
-        ;;
+	case "$1" in
+		"scale="*)
+			scale="$1"
+			shift
+		;;
 
-        "volume="*)
-            scale="$1"
-            shift
-        ;;
+		"volume="*)
+			volume="$1"
+			shift
+		;;
 
-        *)
-            profile="$1"
-            infile="$2"
-            outfile="$3"
-        ;;
-    esac
+		*)
+			profile="$1"
+			infile="$2"
+			outfile="$3"
+		;;
+	esac
 done
 
 
 case "$scale" in
 
-    "")
-        # No scale set - fine
-    ;;
+	"")
+		# No scale set - fine
+	;;
 
-    "scale="*":"*)
-        # Width and height set - fine
-    ;;
+	"scale="*":"*)
+		# Width and height set - fine
+	;;
 
-    "scale=half")
-        scale="scale=0.5*iw:-1"
-    ;;
+	"scale=half")
+		scale="scale=0.5*iw:-1"
+	;;
 
-    "scale=quarter")
-        scale="scale=0.25*iw:-1"
-    ;;
+	"scale=quarter")
+		scale="scale=0.25*iw:-1"
+	;;
 
-    "scale=double")
-        scale="scale=2*iw:-1"
-    ;;
+	"scale=double")
+		scale="scale=2*iw:-1"
+	;;
 
-    "scale="*"%")
-        scale=${scale#"scale="}
-        scale=${scale%"%"}
-        scale="scale=$scale/100*iw:-1"
-    ;;
+	"scale="*"%")
+		scale=${scale#"scale="}
+		scale=${scale%"%"}
+		scale="scale=$scale/100*iw:-1"
+	;;
 
-    *)
-        scale=${scale#"scale="}
-        echo "Bad scale value \"$scale\"!" >&1
-        exit 1
-    ;;
+	*)
+		scale=${scale#"scale="}
+		echo "Bad scale value \"$scale\"!" >&1
+		exit 1
+	;;
 esac
 
 
 case "$volume" in
 
-    "")
-        # No volume set - fine
-    ;;
+	"")
+		# No volume set - fine
+	;;
 
-
-    "volume="*"%")
-        volume=${volume#"volume="}
-        volume=${volume%"%"}
-        volume="volume=$volume/100"
-    ;;
-
-    *)
-        volume=${volume#"volume="}
-        echo "Bad volume value \"$volume\"!" >&1
-        exit 1
-    ;;
 	"volume=max")
 		volume=$(
 			ffmpeg -i "$infile" -filter:a volumedetect \
@@ -178,23 +166,35 @@ case "$volume" in
 		volume="volume=$volume"
 		[ "$volume" = "0.0" ] && volume=
 	;;
+
+	"volume="*"%")
+		volume=${volume#"volume="}
+		volume=${volume%"%"}
+		volume="volume=$volume/100"
+	;;
+
+	*)
+		volume=${volume#"volume="}
+		echo "Bad volume value \"$volume\"!" >&1
+		exit 1
+	;;
 esac
 
 
 onexit()
 {
-    oldtraps=$(trap)
-    oldexit=$(echo "$oldtraps" \
-        | grep "EXIT$" \
-        | sed -E 's/^trap -- (.*) EXIT$/\1/')
-    if [ -n "$oldexit" ]
-    then
-        # shellcheck disable=SC2064
-        trap "eval $oldexit ; $1" EXIT
-    else
-        # shellcheck disable=SC2064
-        trap "$1" EXIT
-    fi
+	oldtraps=$(trap)
+	oldexit=$(echo "$oldtraps" \
+		| grep "EXIT$" \
+		| sed -E 's/^trap -- (.*) EXIT$/\1/')
+	if [ -n "$oldexit" ]
+	then
+		# shellcheck disable=SC2064
+		trap "eval $oldexit ; $1" EXIT
+	else
+		# shellcheck disable=SC2064
+		trap "$1" EXIT
+	fi
 }
 
 
@@ -205,24 +205,24 @@ twopass=""
 
 if [ "$scale" != "" ]
 then
-    encargs="$encargs -filter:v \"$scale\""
+	encargs="$encargs -filter:v \"$scale\""
 fi
 
 
 if [ "$volume" != "" ]
 then
-    encargs="$encargs -filter:a \"$volume\""
+	encargs="$encargs -filter:a \"$volume\""
 fi
 
 
 hascoder()
 {
-    encfound=$(ffmpeg -encoders 2>/dev/null | grep -E "^ [^ ]+ $1 ")
-    if [ -n "$encfound" ]
-    then
-        return 0
-    fi
-    return 1
+	encfound=$(ffmpeg -encoders 2>/dev/null | grep -E "^ [^ ]+ $1 ")
+	if [ -n "$encfound" ]
+	then
+		return 0
+	fi
+	return 1
 }
 
 
@@ -231,300 +231,300 @@ hascoder()
 # ($3) - force HE/HEv2: "yes" or "no"; default is "no"
 activate_aac()
 {
-    if [ "$1" -lt 16 ]
-    then
-        echo "AAC bitrate too low!" >&2
-        exit 1
-    fi
+	if [ "$1" -lt 16 ]
+	then
+		echo "AAC bitrate too low!" >&2
+		exit 1
+	fi
 
-    if [ "${2:-"stereo"}" = "mono" ]
-    then
-        encargs="$encargs -ac 1" # Convert audio to mono
-    fi
+	if [ "${2:-"stereo"}" = "mono" ]
+	then
+		encargs="$encargs -ac 1" # Convert audio to mono
+	fi
 
-    encargs="$encargs -b:a ${1}k" # Set bitrate in kbit/s
+	encargs="$encargs -b:a ${1}k" # Set bitrate in kbit/s
 
-    if [ "$1" -lt 80 ] || [ "${3:-"no"}" = "yes" ]
-    then
-        if [ "${2:-"stereo"}" = "mono" ]
-        then
-            if hascoder "aac_at"
-            then
-                encargs="$encargs -c:a aac_at" # AAC audio
-                encargs="$encargs -profile:a 4" # Use HE encoding
-                return
-            fi
+	if [ "$1" -lt 80 ] || [ "${3:-"no"}" = "yes" ]
+	then
+		if [ "${2:-"stereo"}" = "mono" ]
+		then
+			if hascoder "aac_at"
+			then
+				encargs="$encargs -c:a aac_at" # AAC audio
+				encargs="$encargs -profile:a 4" # Use HE encoding
+				return
+			fi
 
-            if hascoder "libfdk_aac"
-            then
-                encargs="$encargs -c:a libfdk_aac" # AAC audio
-                encargs="$encargs -profile:a aac_he" # Use HE encoding
-                return
-            fi
-        fi
+			if hascoder "libfdk_aac"
+			then
+				encargs="$encargs -c:a libfdk_aac" # AAC audio
+				encargs="$encargs -profile:a aac_he" # Use HE encoding
+				return
+			fi
+		fi
 
-        if hascoder "aac_at"
-        then
-            encargs="$encargs -c:a aac_at" # AAC audio
-            encargs="$encargs -profile:a 28" # Use HEv2 encoding
-            return
-        fi
+		if hascoder "aac_at"
+		then
+			encargs="$encargs -c:a aac_at" # AAC audio
+			encargs="$encargs -profile:a 28" # Use HEv2 encoding
+			return
+		fi
 
-        if hascoder "libfdk_aac"
-        then
-            encargs="$encargs -c:a libfdk_aac" # AAC audio
-            encargs="$encargs -profile:a aac_he_v2" # Use HEv2 encoding
-            return
-        fi
+		if hascoder "libfdk_aac"
+		then
+			encargs="$encargs -c:a libfdk_aac" # AAC audio
+			encargs="$encargs -profile:a aac_he_v2" # Use HEv2 encoding
+			return
+		fi
 
-        if [ "${3:-"no"}" = "yes" ]
-        then
-            echo "No encoder with HE/HEv2 support found!" >&2
-            exit 1
-        fi
-    fi
+		if [ "${3:-"no"}" = "yes" ]
+		then
+			echo "No encoder with HE/HEv2 support found!" >&2
+			exit 1
+		fi
+	fi
 
-    if hascoder "aac_at"
-    then
-        encargs="$encargs -c:a aac_at" # AAC audio
-        encargs="$encargs -aac_at_mode abr" # Set ABR mode
-        return
-    fi
+	if hascoder "aac_at"
+	then
+		encargs="$encargs -c:a aac_at" # AAC audio
+		encargs="$encargs -aac_at_mode abr" # Set ABR mode
+		return
+	fi
 
-    if hascoder "libfdk_aac"
-    then
-        encargs="$encargs -c:a libfdk_aac" # AAC audio
-        return
-    fi
+	if hascoder "libfdk_aac"
+	then
+		encargs="$encargs -c:a libfdk_aac" # AAC audio
+		return
+	fi
 
-    if hascoder "aac"
-    then
-        encargs="$encargs -c:a aac" # AAC audio
-        encargs="$encargs -aac_coder twoloop" # Tread CPU time for quality
-        return
-    fi
+	if hascoder "aac"
+	then
+		encargs="$encargs -c:a aac" # AAC audio
+		encargs="$encargs -aac_coder twoloop" # Tread CPU time for quality
+		return
+	fi
 
-    echo "No AAC encoder found!" >&2
-    exit 1
+	echo "No AAC encoder found!" >&2
+	exit 1
 }
 
 
 case "$profile" in
 
-    "poor")
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -crf 40" # Encode all frames with same quality
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 6.2" # Use level 6.2
-        activate_aac 24 mono
-    ;;
+	"poor")
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -crf 40" # Encode all frames with same quality
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 6.2" # Use level 6.2
+		activate_aac 24 mono
+	;;
 
-    "vlow")
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -crf 36" # Encode all frames with same quality
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 6.2" # Use level 6.2
-        activate_aac 56
-    ;;
+	"vlow")
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -crf 36" # Encode all frames with same quality
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 6.2" # Use level 6.2
+		activate_aac 56
+	;;
 
-    "low")
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -crf 28" # Encode all frames with same quality
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        activate_aac 80
-    ;;
+	"low")
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -crf 28" # Encode all frames with same quality
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		activate_aac 80
+	;;
 
-    "std")
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -crf 24" # Encode all frames with same quality
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        activate_aac 128
-    ;;
-
-
-    "high")
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -crf 21" # Encode all frames with same quality
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        encargs="$encargs -preset slow" # Treat time for compression
-
-        activate_aac 160
-    ;;
-
-    "vhigh")
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -crf 18" # Encode all frames with same quality
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        encargs="$encargs -preset veryslow" # Treat more time for compression
-        activate_aac 192
-    ;;
+	"std")
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -crf 24" # Encode all frames with same quality
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		activate_aac 128
+	;;
 
 
-    "tiny")
-        # 1 * 1024 * 1024 * 8 / 60 =  139'810
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 116" # Use 116 kbit/s for video
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        encargs="$encargs -preset veryslow" # Treat more time for quality
-        activate_aac 24 mono
-        twopass=1
-    ;;
+	"high")
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -crf 21" # Encode all frames with same quality
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -preset slow" # Treat time for compression
 
-    "vsmall")
-        # 2 * 1024 * 1024 * 8 / 60 = 279'620
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 230" # Use 230 kbit/s for video
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        encargs="$encargs -preset veryslow" # Treat more time for quality
-        activate_aac 48
-        twopass=1
-    ;;
+		activate_aac 160
+	;;
 
-    "small")
-        # 4 * 1024 * 1024 * 8 / 60 = 559'240
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 490" # Use 490 kbit/s for video
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        encargs="$encargs -preset veryslow" # Treat more time for quality
-        activate_aac 64
-        twopass=1
-    ;;
-
-    "medium")
-        # 8 * 1024 * 1024 * 8 / 60 = 1'118'481
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 1000k" # Use 1 Mbit/s for video
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        encargs="$encargs -preset slow" # Treat more time for quality
-        activate_aac 80
-        twopass=1
-    ;;
-
-    "big")
-        # 12 * 1024 * 1024 * 8 / 60 = 1'677'721
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 1540k" # Use 1.540 Mbit/s for video
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        encargs="$encargs -preset slow" # Treat more time for quality
-        activate_aac 128
-        twopass=1
-    ;;
-
-    "vbig")
-        # 16 * 1024 * 1024 * 8 / 60 = 2'236'962
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 2064k" # Use 2.064 Mbit/s for video
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        activate_aac 160
-        twopass=1
-    ;;
+	"vhigh")
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -crf 18" # Encode all frames with same quality
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -preset veryslow" # Treat more time for compression
+		activate_aac 192
+	;;
 
 
-    "scrcast")
-        encargs="$encargs -c:v h264" # H.265 video
-        encargs="$encargs -fpsmax 20" # Limit FPS to 20 or below
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 80k" # 80 kbit/s
-        encargs="$encargs -profile:v main" # Use H.264 main profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        encargs="$encargs -preset veryslow" # Treat more time for quality
-        encargs="$encargs -tune animation" # Tune animated large flat areas
-        activate_aac 24 mono yes
-        twopass=1
-    ;;
+	"tiny")
+		# 1 * 1024 * 1024 * 8 / 60 =  139'810
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -b:v 116" # Use 116 kbit/s for video
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -preset veryslow" # Treat more time for quality
+		activate_aac 24 mono
+		twopass=1
+	;;
 
-    "webcast")
-        encargs="$encargs -c:v vp9" # vp9 video
-        encargs="$encargs -fpsmax 20" # Limit FPS to 20 or below
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 64k" # 64k kbit/s
-        encargs="$encargs -tune-content screen" # Tune for screen recording
-        encargs="$encargs -cpu-used 0" # Trade speed for quality
-        encargs="$encargs -lag-in-frames 25" # Trade lag for quality
-        encargs="$encargs -auto-alt-ref 6" # Trade lag for quality
-        encargs="$encargs -row-mt 1" # Use multiple cores more aggressively
-        # --- Vorbis Audio ---
-        encargs="$encargs -c:a libvorbis" # Vorbis audio
-        encargs="$encargs -b:a 32k" # Use 24 kbit/s for audio
-        encargs="$encargs -ar 22050" # Lower sampling rate to 22050 Hz
-        encargs="$encargs -ac 1" # Convert audio to mono
-        # --- Two Pass Speed Up Hack ---
-        twopass="$twopass -cpu-used 8" # Speed up first pass
-        # ---
-        # Sometimes this file is created in current working dir.
-        # Delete it just in case.
-        onexit "rm -f opsnr.stt"
-    ;;
+	"vsmall")
+		# 2 * 1024 * 1024 * 8 / 60 = 279'620
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -b:v 230" # Use 230 kbit/s for video
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -preset veryslow" # Treat more time for quality
+		activate_aac 48
+		twopass=1
+	;;
 
+	"small")
+		# 4 * 1024 * 1024 * 8 / 60 = 559'240
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -b:v 490" # Use 490 kbit/s for video
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -preset veryslow" # Treat more time for quality
+		activate_aac 64
+		twopass=1
+	;;
 
-    "bug")
-        decargs="$decargs -an" # Don't even decode audio
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 32" # Use 32 kbit/s for video
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        encargs="$encargs -tune stillimage" # Tune for little motion
-        encargs="$encargs -preset veryslow" # Treat more time for quality
-        twopass=1
-    ;;
+	"medium")
+		# 8 * 1024 * 1024 * 8 / 60 = 1'118'481
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -b:v 1000k" # Use 1 Mbit/s for video
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -preset slow" # Treat more time for quality
+		activate_aac 80
+		twopass=1
+	;;
 
-    "bughq")
-        decargs="$decargs -an" # Don't even decode audio
-        encargs="$encargs -c:v h264" # H.264 video
-        encargs="$encargs -fpsmax 25" # Limit FPS to 25 or below
-        encargs="$encargs -vsync vfr" # Allow varible frame rate
-        encargs="$encargs -b:v 64k" # Use 64 kbit/s for video
-        encargs="$encargs -profile:v high" # Use H.264 high profile
-        encargs="$encargs -level:v 5.2" # Use level 5.2
-        encargs="$encargs -tune animation" # Tune for animated large flat areas
-        encargs="$encargs -preset veryslow" # Treat more time for quality
-        twopass=1
-    ;;
+	"big")
+		# 12 * 1024 * 1024 * 8 / 60 = 1'677'721
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -b:v 1540k" # Use 1.540 Mbit/s for video
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -preset slow" # Treat more time for quality
+		activate_aac 128
+		twopass=1
+	;;
 
-
-    "gif")
-        decargs="$decargs -an" # Don't even decode audio
-    ;;
-
-    "gifo")
-        decargs="$decargs -an" # Don't even decode audio
-    ;;
-
-
-    "transform")
-        encargs="$encargs -c:v copy" # Copy video data
-        encargs="$encargs -c:a copy" # Copy audio data
-        ;;
+	"vbig")
+		# 16 * 1024 * 1024 * 8 / 60 = 2'236'962
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -b:v 2064k" # Use 2.064 Mbit/s for video
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		activate_aac 160
+		twopass=1
+	;;
 
 
-    *)
-        echo "Unknown profile \"$profile\"!" >&1
-        exit 1
-    ;;
+	"scrcast")
+		encargs="$encargs -c:v h264" # H.265 video
+		encargs="$encargs -fpsmax 20" # Limit FPS to 20 or below
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -b:v 80k" # 80 kbit/s
+		encargs="$encargs -profile:v main" # Use H.264 main profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -preset veryslow" # Treat more time for quality
+		encargs="$encargs -tune animation" # Tune animated large flat areas
+		activate_aac 24 mono yes
+		twopass=1
+	;;
+
+	"webcast")
+		encargs="$encargs -c:v vp9" # vp9 video
+		encargs="$encargs -fpsmax 20" # Limit FPS to 20 or below
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -b:v 64k" # 64k kbit/s
+		encargs="$encargs -tune-content screen" # Tune for screen recording
+		encargs="$encargs -cpu-used 0" # Trade speed for quality
+		encargs="$encargs -lag-in-frames 25" # Trade lag for quality
+		encargs="$encargs -auto-alt-ref 6" # Trade lag for quality
+		encargs="$encargs -row-mt 1" # Use multiple cores more aggressively
+		# --- Vorbis Audio ---
+		encargs="$encargs -c:a libvorbis" # Vorbis audio
+		encargs="$encargs -b:a 32k" # Use 24 kbit/s for audio
+		encargs="$encargs -ar 22050" # Lower sampling rate to 22050 Hz
+		encargs="$encargs -ac 1" # Convert audio to mono
+		# --- Two Pass Speed Up Hack ---
+		twopass="$twopass -cpu-used 8" # Speed up first pass
+		# ---
+		# Sometimes this file is created in current working dir.
+		# Delete it just in case.
+		onexit "rm -f opsnr.stt"
+	;;
+
+
+	"bug")
+		decargs="$decargs -an" # Don't even decode audio
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -b:v 32" # Use 32 kbit/s for video
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -tune stillimage" # Tune for little motion
+		encargs="$encargs -preset veryslow" # Treat more time for quality
+		twopass=1
+	;;
+
+	"bughq")
+		decargs="$decargs -an" # Don't even decode audio
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -fpsmax 25" # Limit FPS to 25 or below
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -b:v 64k" # Use 64 kbit/s for video
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -tune animation" # Tune for animated large flat areas
+		encargs="$encargs -preset veryslow" # Treat more time for quality
+		twopass=1
+	;;
+
+
+	"gif")
+		decargs="$decargs -an" # Don't even decode audio
+	;;
+
+	"gifo")
+		decargs="$decargs -an" # Don't even decode audio
+	;;
+
+
+	"transform")
+		encargs="$encargs -c:v copy" # Copy video data
+		encargs="$encargs -c:a copy" # Copy audio data
+		;;
+
+
+	*)
+		echo "Unknown profile \"$profile\"!" >&1
+		exit 1
+	;;
 esac
 
 
@@ -534,7 +534,7 @@ onexit "rm -r '$tempdir'"
 
 callffmpeg()
 {
-    eval "ffmpeg $*"
+	eval "ffmpeg $*"
 }
 
 
@@ -544,32 +544,32 @@ of="\"$outfile\""
 
 case "$profile" in
 
-    "gifo")
-        palette="$tempdir/palette.png"
-        p1args="-filter_complex \"[0:v] palettegen\" \"$palette\""
-        p2args="-i \"$palette\" -filter_complex \"[0:v][1:v] paletteuse\""
+	"gifo")
+		palette="$tempdir/palette.png"
+		p1args="-filter_complex \"[0:v] palettegen\" \"$palette\""
+		p2args="-i \"$palette\" -filter_complex \"[0:v][1:v] paletteuse\""
 
-        callffmpeg "$decargs" -i "$if" "$encargs" "$p1args"
-        callffmpeg "$decargs" -i "$if" "$encargs" "$p2args" "$of"
-        exit 0
-    ;;
+		callffmpeg "$decargs" -i "$if" "$encargs" "$p1args"
+		callffmpeg "$decargs" -i "$if" "$encargs" "$p2args" "$of"
+		exit 0
+	;;
 esac
 
 
 if [ -n "$twopass" ]
 then
-    passlog="-passlogfile \"$tempdir\""
-    p1args="-pass 1 $passlog -f null /dev/null"
-    p2args="-pass 2 $passlog"
+	passlog="-passlogfile \"$tempdir\""
+	p1args="-pass 1 $passlog -f null /dev/null"
+	p2args="-pass 2 $passlog"
 
-    if [ "$twopass" != "1" ]
-    then
-        p1args="$twopass $p1args"
-    fi
+	if [ "$twopass" != "1" ]
+	then
+		p1args="$twopass $p1args"
+	fi
 
-    callffmpeg "$decargs" -an -i "$if" "$encargs" "$p1args"
-    callffmpeg "$decargs" -i "$if" "$encargs" "$p2args" "$of"
-    exit 0
+	callffmpeg "$decargs" -an -i "$if" "$encargs" "$p1args"
+	callffmpeg "$decargs" -i "$if" "$encargs" "$p2args" "$of"
+	exit 0
 fi
 
 
