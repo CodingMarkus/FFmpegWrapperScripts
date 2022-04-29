@@ -484,7 +484,7 @@ case "$profile" in
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -b:v 32" # Use 32 kbit/s for video
+		encargs="$encargs -b:v 32k" # Use 32 kbit/s for video
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -tune stillimage" # Tune for little motion
