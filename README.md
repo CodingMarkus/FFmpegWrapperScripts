@@ -1,12 +1,12 @@
 # FFmpeg Wrapper Scripts
 
-## Help as shown by `enc_video`
+## Help as shown by `enc.video`
 
 ```
 
 Syntax:
 
-    ./enc_video [scale=<w:h|x%|keyword>] [volume=<p%|max>]
+    ./enc.video [scale=<w:h|x%|keyword>] [volume=<p%|max>]
         <profile> <input> <output>
 
     (order of scale and volume is irrelevant)
@@ -66,12 +66,12 @@ with the GIF profile creates an animated PNG file. Note that not all codecs can
 be used in all container formats.
 ```
 
-# Help as shown by `enc_audio` Script
+# Help as shown by `enc.audio` Script
 
 ```
 Syntax:
 
-    ./enc_audio [volume=<p%|max>] <profile> <input> <output>
+    ./enc.audio [volume=<p%|max>] <profile> <input> <output>
 
 
 Valid profile names are:
