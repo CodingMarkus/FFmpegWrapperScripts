@@ -512,10 +512,12 @@ case "$profile" in
 
 	"gif")
 		decargs="$decargs -an" # Don't even decode audio
+		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
 	;;
 
 	"gifo")
 		decargs="$decargs -an" # Don't even decode audio
+		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
 	;;
 
 
@@ -550,11 +552,11 @@ case "$profile" in
 
 	"gifo")
 		palette="$tempdir/palette.png"
-		p1args="-filter_complex \"[0:v] palettegen\" \"$palette\""
+		p1args="-filter_complex \"[0:v] palettegen\""
 		p2args="-i \"$palette\" -filter_complex \"[0:v][1:v] paletteuse\""
 
-		callffmpeg "$decargs" -i "$if" "$encargs" "$p1args"
-		callffmpeg "$decargs" -i "$if" "$encargs" "$p2args" "$of"
+		callffmpeg "$decargs" -i "$if" "$p1args" "$encargs" "$palette"
+		callffmpeg "$decargs" -i "$if" "$p2args" "$encargs" "$of"
 		exit 0
 	;;
 esac
@@ -563,7 +565,7 @@ esac
 if [ -n "$twopass" ]
 then
 	passlog="-passlogfile \"$tempdir\""
-	p1args="-pass 1 $passlog -f null /dev/null"
+	p1args="-pass 1 $passlog -f null"
 	p2args="-pass 2 $passlog"
 
 	if [ "$twopass" != "1" ]
@@ -571,7 +573,7 @@ then
 		p1args="$twopass $p1args"
 	fi
 
-	callffmpeg "$decargs" -an -i "$if" "$encargs" "$p1args"
+	callffmpeg "$decargs" -an -i "$if" "$encargs" "$p1args" /dev/null
 	callffmpeg "$decargs" -i "$if" "$encargs" "$p2args" "$of"
 	exit 0
 fi
