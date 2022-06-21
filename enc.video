@@ -42,11 +42,12 @@ Valid profile names are:
     big    - Big file size, < 12 MiByte/min (H.264/AAC).
     vbig   - Very big file size, < 16 MiByte/min (H.264/AAC).
 
-    scrcast   - Screencast with very low bitrate (H.264/AAC).
-    webcast   - Web screencast with low bitrate (VP9/Vorbis).
+    scrcast - Screencast with very low bitrate (H.264/AAC).
+    webcast - Web screencast with low bitrate (VP9/Opus).
 
-    bug   - Screen recording for bug reporting (H.264).
-    bughq - As bug but if lots of motion is visible (H.264).
+    bug     - Screen recording for bug reporting (H.264).
+    bughq   - As bug but more quality and optimized for motion (H.264).
+	bugwebm - As bug but using VP9 and slightly better quality (VP9).
 
     gif  - Animated GIF (or APNG).
     gifo - Animated GIF (or APNG) w/ optimized palette.
@@ -469,10 +470,9 @@ case "$profile" in
 		encargs="$encargs -lag-in-frames 25" # Trade lag for quality
 		encargs="$encargs -auto-alt-ref 6" # Trade lag for quality
 		encargs="$encargs -row-mt 1" # Use multiple cores more aggressively
-		# --- Vorbis Audio ---
-		encargs="$encargs -c:a libvorbis" # Vorbis audio
-		encargs="$encargs -b:a 32k" # Use 24 kbit/s for audio
-		encargs="$encargs -ar 22050" # Lower sampling rate to 22050 Hz
+		# --- Opus Audio ---
+		encargs="$encargs -c:a libopus" # Opus audio
+		encargs="$encargs -b:a 16k" # Use 16 kbit/s for audio
 		encargs="$encargs -ac 1" # Convert audio to mono
 		# --- Two Pass Speed Up Hack ---
 		twopass="$twopass -cpu-used 8" # Speed up first pass
@@ -488,25 +488,40 @@ case "$profile" in
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -b:v 48k" # Use 40 kbit/s for video
+		encargs="$encargs -crf 40" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -tune stillimage" # Tune for little motion
 		encargs="$encargs -preset veryslow" # Treat more time for quality
-		twopass=1
 	;;
 
 	"bughq")
 		decargs="$decargs -an" # Don't even decode audio
 		encargs="$encargs -c:v h264" # H.264 video
-		encargs="$encargs -fpsmax 25" # Limit FPS to 25 or below
+		encargs="$encargs -fpsmax 20" # Limit FPS to 20 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -b:v 80k" # Use 80 kbit/s for video
+		encargs="$encargs -crf 36" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -tune animation" # Tune for animated large flat areas
 		encargs="$encargs -preset veryslow" # Treat more time for quality
-		twopass=1
+	;;
+
+	"bugwebm")
+		decargs="$decargs -an" # Don't even decode audio
+		encargs="$encargs -c:v vp9" # VP9 video
+		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -crf 56" # Encode all frames with same quality
+		encargs="$encargs -tune-content screen" # Tune for screen recording
+		encargs="$encargs -cpu-used 0" # Trade speed for quality
+		encargs="$encargs -lag-in-frames 25" # Trade lag for quality
+		encargs="$encargs -auto-alt-ref 6" # Trade lag for quality
+		encargs="$encargs -row-mt 1" # Use multiple cores more aggressively
+		# ---
+		# Sometimes this file is created in current working dir.
+		# Delete it just in case.
+		onexit "rm -f opsnr.stt"
 	;;
 
 
