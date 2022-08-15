@@ -14,6 +14,7 @@ Syntax:
 
 Valid profile names are:
 
+	vpoor - Very poor quality (H.264/AAC).
     poor  - Poor quality (H.264/AAC).
     vlow  - Very low quality (H.264/AAC).
     low   - Low quality (H.264/AAC).
