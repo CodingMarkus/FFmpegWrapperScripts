@@ -111,14 +111,18 @@ case "$volume" in
 			| grep max_volume \
 			| sed 's/.*max_volume: -\{0,1\}\([0-9.]\{1,\}\) dB$/\1/'
 		)
-		volume="volume=$volume"
-		[ "$volume" = "0.0" ] && volume=
+		if [ "$volume" = "0.0" ]
+		then
+			volume=
+		else
+			volume="volume=${volume}dB"
+		fi
 	;;
 
 	"volume="*"%")
 		volume=${volume#"volume="}
 		volume=${volume%"%"}
-		volume="volume=$volume/100"
+		[ "$volume" = 0 ] || volume="volume=$volume/100"
 	;;
 
 	*)
