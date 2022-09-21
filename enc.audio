@@ -153,7 +153,12 @@ decargs="-vn"
 
 if [ "$volume" != "" ]
 then
-	encargs="$encargs -filter:a \"$volume\""
+	if [ "$volume" = "0" ]
+	then
+		decargs="$decargs -an" # Don't even decode any audio
+	else
+		encargs="$encargs -filter:a \"$volume\""
+	fi
 fi
 
 
@@ -261,19 +266,19 @@ activate_aacvbr()
 		case "$1" in
 			"5")
 				encargs="$encargs -qscale:a 3" # Approx. libfdk level 5
-				;;
+			;;
 
 			"4")
 				encargs="$encargs -qscale:a 6" # Approx. libfdk level 4
-				;;
+			;;
 
 			"3")
 				encargs="$encargs -qscale:a 8" # Approx. libfdk level 3
-				;;
+			;;
 
 			"2")
 				encargs="$encargs -qscale:a 9" # Approx. libfdk level 2
-				;;
+			;;
 
 		esac
 		return
@@ -327,43 +332,43 @@ case "$profile" in
 		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
 		encargs="$encargs -qscale:a 6" # Set VBR quality
 		encargs="$encargs -compression_level 0" # Highst compression quality
-		;;
+	;;
 
 	"mp3low")
 		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
 		encargs="$encargs -qscale:a 4" # Set VBR quality
 		encargs="$encargs -compression_level 0" # Highst compression quality
-		;;
+	;;
 
 	"mp3std")
 		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
 		encargs="$encargs -qscale:a 2" # Set VBR quality
 		encargs="$encargs -compression_level 0" # Highst compression quality
-		;;
+	;;
 
 	"mp3high")
 		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
 		encargs="$encargs -qscale:a 0" # Set VBR quality
 		encargs="$encargs -compression_level 0" # Highst compression quality
-		;;
+	;;
 
 
 
 	"aacpoor")
 		activate_aacvbr 2
-		;;
+	;;
 
 	"aaclow")
 		activate_aacvbr 3
-		;;
+	;;
 
 	"aacstd")
 		activate_aacvbr 4
-		;;
+	;;
 
 	"aachigh")
 		activate_aacvbr 5
-		;;
+	;;
 
 
 	"aacarc")
@@ -375,25 +380,25 @@ case "$profile" in
 		else
 			activate_aac 256 stereo
 		fi
-		;;
+	;;
 
 	"archive")
 		encargs="$encargs -codec:a flac" # Set FLAC codec
 		encargs="$encargs -compression_level 12" # Use best compression
-		;;
+	;;
 
 
 	"speechlow")
 		activate_aac 24 mono yes
-		;;
+	;;
 
 	"speechstd")
 		activate_aac 32 mono yes
-		;;
+	;;
 
 	"speechhigh")
 		activate_aac 48 mono yes
-		;;
+	;;
 
 
 	"webcast")
@@ -401,7 +406,7 @@ case "$profile" in
 		encargs="$encargs -b:a 32k" # Use 24 kbit/s for audio
 		encargs="$encargs -ar 22050" # Lower sampling rate to 22050 Hz
 		encargs="$encargs -ac 1" # Convert audio to mono
-		;;
+	;;
 
 	"webcasthigh")
 		encargs="$encargs -c:a libvorbis" # Vorbis audio
@@ -414,18 +419,18 @@ case "$profile" in
 		encargs="$encargs -b:a 24k" # Use 24 kbit/s for audio
 		encargs="$encargs -ar 24000" # Lower sampling rate to 24000 Hz
 		encargs="$encargs -ac 1" # Convert audio to mono
-		;;
+	;;
 
 	"webcasthqhigh")
 		encargs="$encargs -c:a libopus" # Opus audio
 		encargs="$encargs -b:a 56k" # Use 24 kbit/s for audio
 		encargs="$encargs -ac 1" # Convert audio to mono
-		;;
+	;;
 
 
 	"transform")
 		encargs="$encargs -c:a copy" # Copy audio data
-		;;
+	;;
 
 
 	"fixaac")
@@ -435,7 +440,7 @@ case "$profile" in
 		ffmpeg -vn -i "$infile" -c:a copy -f adts - \
 			| ffmpeg -f aac -i - -c:a copy "$outfile"
 		exit 0
-		;;
+	;;
 
 	*)
 		echo "Unknown profile \"$profile\"!" >&1
@@ -444,13 +449,12 @@ case "$profile" in
 esac
 
 
-if="\"$infile\""
-of="\"$outfile\""
-
-
 callffmpeg()
 {
 	eval "ffmpeg $*"
 }
+
+if="\"$infile\""
+of="\"$outfile\""
 
 callffmpeg "$decargs" -i "$if" "$encargs" "$of"
