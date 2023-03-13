@@ -493,6 +493,11 @@ case "$profile" in
 
 
 	"transform")
+		if [ -d "$outfile" ]
+		then
+			echo "Transform requires output to be a file name!" >&2
+			exit 1
+		fi
 		encargs="$encargs -c:a copy" # Copy audio data
 	;;
 
