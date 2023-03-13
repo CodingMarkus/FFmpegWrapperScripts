@@ -63,6 +63,10 @@ The container format is guessed by the file extension of the output file. E.g.
 \".mp4\" generates an MPEG 4 container file, whereas \".mp3\" would generate a
 MP3 container, and \".aac\" a raw AAC data stream. Note that not all codecs can
 be used in all container formats.
+
+If output is a folder, the same file name as input will be used, except for
+the file extension which will be the default extension for the default
+container format of the chosen profile.
 "
 	printf "%s" "$syntax" >&2
 	exit 1
@@ -73,6 +77,7 @@ volume=""
 profile=""
 infile=""
 outfile=""
+outfileExt=""
 
 
 while [ -z "$outfile" ]
@@ -164,6 +169,45 @@ then
 		encargs="$encargs -filter:a \"$volume\""
 	fi
 fi
+
+
+abspath()
+(
+	path=$1
+
+	if [ ! -e "$path" ]; then
+		return 1
+	fi
+
+	file=
+	dir="$path"
+	if [ ! -d "$dir" ]; then
+		file=$( basename "$dir" )
+		dir=$( dirname "$dir" )
+	fi
+
+	case "$dir" in
+		/*) ;;
+		*) dir="$( pwd )/$dir"
+	esac
+	result=$( cd "$dir" && pwd )
+
+	if [ -n "$file" ]; then
+		case "$result" in
+			*/) ;;
+			*) result="$result/"
+		esac
+		result="$result$file"
+	fi
+
+	printf "%s\n" "$result"
+)
+
+
+basenameWithoutExt()
+{
+	printf '%s' "$( basename "$1" | cut -f1 -d'.' )"
+}
 
 
 hascoder()
@@ -329,49 +373,56 @@ activate_aacvbr()
 }
 
 
-
 case "$profile" in
 
 	"mp3poor")
 		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
 		encargs="$encargs -qscale:a 6" # Set VBR quality
 		encargs="$encargs -compression_level 0" # Highst compression quality
+		outfileExt="mp3"
 	;;
 
 	"mp3low")
 		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
 		encargs="$encargs -qscale:a 4" # Set VBR quality
 		encargs="$encargs -compression_level 0" # Highst compression quality
+		outfileExt="mp3"
 	;;
 
 	"mp3std")
 		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
 		encargs="$encargs -qscale:a 2" # Set VBR quality
 		encargs="$encargs -compression_level 0" # Highst compression quality
+		outfileExt="mp3"
 	;;
 
 	"mp3high")
 		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
 		encargs="$encargs -qscale:a 0" # Set VBR quality
 		encargs="$encargs -compression_level 0" # Highst compression quality
+		outfileExt="mp3"
 	;;
 
 
 
 	"aacpoor")
 		activate_aacvbr 2
+		outfileExt="m4a"
 	;;
 
 	"aaclow")
 		activate_aacvbr 3
+		outfileExt="m4a"
 	;;
 
 	"aacstd")
 		activate_aacvbr 4
+		outfileExt="m4a"
 	;;
 
 	"aachigh")
 		activate_aacvbr 5
+		outfileExt="m4a"
 	;;
 
 
@@ -384,24 +435,29 @@ case "$profile" in
 		else
 			activate_aac 256 stereo
 		fi
+		outfileExt="m4a"
 	;;
 
 	"archive")
 		encargs="$encargs -codec:a flac" # Set FLAC codec
 		encargs="$encargs -compression_level 12" # Use best compression
+		outfileExt="flac"
 	;;
 
 
 	"speechlow")
 		activate_aac 24 mono yes
+		outfileExt="m4a"
 	;;
 
 	"speechstd")
 		activate_aac 32 mono yes
+		outfileExt="m4a"
 	;;
 
 	"speechhigh")
 		activate_aac 48 mono yes
+		outfileExt="m4a"
 	;;
 
 
@@ -410,25 +466,29 @@ case "$profile" in
 		encargs="$encargs -b:a 32k" # Use 24 kbit/s for audio
 		encargs="$encargs -ar 22050" # Lower sampling rate to 22050 Hz
 		encargs="$encargs -ac 1" # Convert audio to mono
+		outfileExt="ogg"
 	;;
 
 	"webcasthigh")
 		encargs="$encargs -c:a libvorbis" # Vorbis audio
 		encargs="$encargs -b:a 56k" # Use 56 kbit/s for audio
 		encargs="$encargs -ac 1" # Convert audio to mono
-		;;
+		outfileExt="ogg"
+	;;
 
 	"webcasthq")
 		encargs="$encargs -c:a libopus" # Opus audio
 		encargs="$encargs -b:a 24k" # Use 24 kbit/s for audio
 		encargs="$encargs -ar 24000" # Lower sampling rate to 24000 Hz
 		encargs="$encargs -ac 1" # Convert audio to mono
+		outfileExt="opus"
 	;;
 
 	"webcasthqhigh")
 		encargs="$encargs -c:a libopus" # Opus audio
 		encargs="$encargs -b:a 56k" # Use 24 kbit/s for audio
 		encargs="$encargs -ac 1" # Convert audio to mono
+		outfileExt="opus"
 	;;
 
 
@@ -453,12 +513,40 @@ case "$profile" in
 esac
 
 
+if [ -d "$outfile" ]
+then
+	ext=""
+	[ -n "$outfileExt" ] && ext=".$outfileExt"
+	outfile="$outfile/$( basenameWithoutExt "$infile" )$ext"
+	if [ "$(abspath "$infile")" = "$(abspath "$outfile")" ]
+	then
+		echo "Input file cannot override itself!" >&1
+		exit 1
+	fi
+fi
+
+
 callffmpeg()
 {
 	eval "ffmpeg $*"
 }
 
-if="\"$infile\""
-of="\"$outfile\""
 
-callffmpeg "$decargs" -i "$if" "$encargs" "$of"
+case "$profile" in
+
+	"fixaac")
+		# Sometimes "transform" will already fix the stream when transforming
+		# from an AAC container to a container of the same kind but in some
+		# cases this doesn't work and then this trick will work:
+		ffmpeg -vn -i "$infile" -c:a copy -f adts - \
+			| ffmpeg -f aac -i - -c:a copy "$outfile"
+	;;
+
+
+	*)
+		if="\"$infile\""
+		of="\"$outfile\""
+
+		callffmpeg "$decargs" -i "$if" "$encargs" "$of"
+	;;
+esac
