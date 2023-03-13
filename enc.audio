@@ -498,13 +498,18 @@ case "$profile" in
 
 
 	"fixaac")
-		# Sometimes "transform" will already fix the stream when transforming
-		# from an AAC container to a container of the same kind but in some
-		# cases this doesn't work and then this trick will work:
-		ffmpeg -vn -i "$infile" -c:a copy -f adts - \
-			| ffmpeg -f aac -i - -c:a copy "$outfile"
-		exit 0
+		# For the case that output is a directory and it's thes same directory
+		# as input, we want some special magic here
+		if [ -d "$outfile" ]
+		then
+			indir=$( dirname "$infile" )
+			if [ "$(abspath "$indir")" = "$(abspath "$outfile")" ]
+			then
+				outfile="$outfile/$( basenameWithoutExt "$infile" ).fixed.m4a"
+			fi
+		fi
 	;;
+
 
 	*)
 		echo "Unknown profile \"$profile\"!" >&1
