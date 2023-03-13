@@ -77,6 +77,10 @@ The container format is guessed by the file extension of the output file. E.g.
 Matroska container, and \".webm\" a WebM container. Similar using \".apng\"
 with the GIF profile creates an animated PNG file. Note that not all codecs can
 be used in all container formats.
+
+If output is a folder, the same file name as input will be used, except for
+the file extension which will be the default extension for the default
+container format of the chosen profile.
 "
 	printf "%s" "$syntax" >&2
 	exit 1
@@ -88,6 +92,7 @@ volume=""
 profile=""
 infile=""
 outfile=""
+outfileExt=""
 
 while [ -z "$outfile" ]
 do
@@ -230,6 +235,45 @@ then
 fi
 
 
+abspath()
+(
+	path=$1
+
+	if [ ! -e "$path" ]; then
+		return 1
+	fi
+
+	file=
+	dir="$path"
+	if [ ! -d "$dir" ]; then
+		file=$( basename "$dir" )
+		dir=$( dirname "$dir" )
+	fi
+
+	case "$dir" in
+		/*) ;;
+		*) dir="$( pwd )/$dir"
+	esac
+	result=$( cd "$dir" && pwd )
+
+	if [ -n "$file" ]; then
+		case "$result" in
+			*/) ;;
+			*) result="$result/"
+		esac
+		result="$result$file"
+	fi
+
+	printf "%s\n" "$result"
+)
+
+
+basenameWithoutExt()
+{
+	printf '%s' "$( basename "$1" | cut -f1 -d'.' )"
+}
+
+
 hascoder()
 {
 	encfound=$(ffmpeg -encoders 2>/dev/null | grep -E "^ [^ ]+ $1 ")
@@ -333,6 +377,7 @@ case "$profile" in
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 6.2" # Use level 6.2
 		activate_aac 24 mono
+		outfileExt="mp4"
 	;;
 
 	"poor")
@@ -342,6 +387,7 @@ case "$profile" in
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 6.2" # Use level 6.2
 		activate_aac 56
+		outfileExt="mp4"
 	;;
 
 	"vlow")
@@ -351,6 +397,7 @@ case "$profile" in
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 6.2" # Use level 6.2
 		activate_aac 64
+		outfileExt="mp4"
 	;;
 
 	"low")
@@ -360,6 +407,7 @@ case "$profile" in
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		activate_aac 80
+		outfileExt="mp4"
 	;;
 
 	"std")
@@ -369,6 +417,7 @@ case "$profile" in
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		activate_aac 128
+		outfileExt="mp4"
 	;;
 
 
@@ -379,8 +428,8 @@ case "$profile" in
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -preset slow" # Treat time for compression
-
 		activate_aac 160
+		outfileExt="mp4"
 	;;
 
 	"vhigh")
@@ -391,6 +440,7 @@ case "$profile" in
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -preset veryslow" # Treat more time for compression
 		activate_aac 192
+		outfileExt="mp4"
 	;;
 
 
@@ -404,6 +454,7 @@ case "$profile" in
 		encargs="$encargs -preset veryslow" # Treat more time for quality
 		activate_aac 24 mono
 		twopass=1
+		outfileExt="mp4"
 	;;
 
 	"vsmall")
@@ -416,6 +467,7 @@ case "$profile" in
 		encargs="$encargs -preset veryslow" # Treat more time for quality
 		activate_aac 48
 		twopass=1
+		outfileExt="mp4"
 	;;
 
 	"small")
@@ -428,6 +480,7 @@ case "$profile" in
 		encargs="$encargs -preset veryslow" # Treat more time for quality
 		activate_aac 64
 		twopass=1
+		outfileExt="mp4"
 	;;
 
 	"medium")
@@ -440,6 +493,7 @@ case "$profile" in
 		encargs="$encargs -preset slow" # Treat more time for quality
 		activate_aac 80
 		twopass=1
+		outfileExt="mp4"
 	;;
 
 	"big")
@@ -452,6 +506,7 @@ case "$profile" in
 		encargs="$encargs -preset slow" # Treat more time for quality
 		activate_aac 128
 		twopass=1
+		outfileExt="mp4"
 	;;
 
 	"vbig")
@@ -463,6 +518,7 @@ case "$profile" in
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		activate_aac 160
 		twopass=1
+		outfileExt="mp4"
 	;;
 
 
@@ -477,6 +533,7 @@ case "$profile" in
 		encargs="$encargs -tune animation" # Tune animated large flat areas
 		activate_aac 24 mono yes
 		twopass=1
+		outfileExt="mp4"
 	;;
 
 	"webcast")
@@ -512,6 +569,7 @@ case "$profile" in
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -tune stillimage" # Tune for little motion
 		encargs="$encargs -preset veryslow" # Treat more time for quality
+		outfileExt="mp4"
 	;;
 
 	"bughq")
@@ -524,6 +582,7 @@ case "$profile" in
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -tune animation" # Tune for animated large flat areas
 		encargs="$encargs -preset veryslow" # Treat more time for quality
+		outfileExt="mp4"
 	;;
 
 	"bugwebm")
@@ -547,15 +606,22 @@ case "$profile" in
 	"gif")
 		decargs="$decargs -an" # Don't even decode audio
 		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
+		outfileExt="gif"
 	;;
 
 	"gifo")
 		decargs="$decargs -an" # Don't even decode audio
 		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
+		outfileExt="gif"
 	;;
 
 
 	"transform")
+		if [ -d "$outfile" ]
+		then
+			echo "Transform requires output to be a file name!" >&2
+			exit 1
+		fi
 		encargs="$encargs -c:v copy" # Copy video data
 		encargs="$encargs -c:a copy" # Copy audio data
 		;;
@@ -566,6 +632,19 @@ case "$profile" in
 		exit 1
 	;;
 esac
+
+
+if [ -d "$outfile" ]
+then
+	ext=""
+	[ -n "$outfileExt" ] && ext=".$outfileExt"
+	outfile="$outfile/$( basenameWithoutExt "$infile" )$ext"
+	if [ "$(abspath "$infile")" = "$(abspath "$outfile")" ]
+	then
+		echo "Input file cannot override itself!" >&1
+		exit 1
+	fi
+fi
 
 
 tempdir=$(mktemp -d)
@@ -591,26 +670,25 @@ case "$profile" in
 
 		callffmpeg "$decargs" -i "$if" "$p1args" "$encargs" "$palette"
 		callffmpeg "$decargs" -i "$if" "$p2args" "$encargs" "$of"
-		exit 0
+	;;
+
+
+	*)
+		if [ -n "$twopass" ]
+		then
+			passlog="-passlogfile \"$tempdir\""
+			p1args="-pass 1 $passlog -f null"
+			p2args="-pass 2 $passlog"
+
+			if [ "$twopass" != "1" ]
+			then
+				p1args="$twopass $p1args"
+			fi
+
+			callffmpeg "$decargs" -an -i "$if" "$encargs" "$p1args" /dev/null
+			callffmpeg "$decargs" -i "$if" "$encargs" "$p2args" "$of"
+		else
+			callffmpeg "$decargs" -i "$if" "$encargs" "$of"
+		fi
 	;;
 esac
-
-
-if [ -n "$twopass" ]
-then
-	passlog="-passlogfile \"$tempdir\""
-	p1args="-pass 1 $passlog -f null"
-	p2args="-pass 2 $passlog"
-
-	if [ "$twopass" != "1" ]
-	then
-		p1args="$twopass $p1args"
-	fi
-
-	callffmpeg "$decargs" -an -i "$if" "$encargs" "$p1args" /dev/null
-	callffmpeg "$decargs" -i "$if" "$encargs" "$p2args" "$of"
-	exit 0
-fi
-
-
-callffmpeg "$decargs" -i "$if" "$encargs" "$of"
