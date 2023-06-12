@@ -3,24 +3,70 @@
 set -e
 
 
-noffmpeg()
+error()
 {
-	echo "ffmpeg not found in \$PATH!" >&2
-	exit 1
+    case $1 in
+        "
+"*) ;;
+        *) printf '\n' >&2
+    esac
+
+    printf '%s' "$1" >&2
+
+    case $1 in
+        *"
+") ;;
+        *) printf '\n' >&2
+    esac
+    exit 1
 }
 
 
-# Check if ffmpeg is even installed on found in PATH
-command -v ffmpeg >/dev/null || noffmpeg
+command -v ffmpeg >/dev/null || error "ffmpeg not found in \$PATH!"
 
 
 badargs()
 {
-	bin="./$(basename "$0")"
-	syntax="
+    bin="$(basename "$0")"
+    syntax="
 Syntax:
 
-    $bin [volume=<p%|max>] <profile> <input> <output>
+    $bin [options] <profile> <input_file> <output_file>
+
+    $bin [options] <profile> <input_file> ... <output_directory>
+
+
+The container format is guessed by the file extension of the output file.
+E.g. \".mp4\" generates an MPEG 4 container file, whereas \".mp3\" would
+generate a MP3 container, and \".aac\" a raw AAC data stream.
+
+If output is a directory, the same file name as input will be used, except for
+the file extension which will be the default extension for the default
+container format of the chosen profile, unless overridden by the \"extension\"
+option.
+
+NOTE:
+Not all codecs can be used in all container formats!
+
+
+Options:
+
+    NOTE:
+    Options can be shortened. E.g. \"vol\" and \"volume\" are the same option.
+
+    vol[ume]=<p%|max>
+
+        Volume can either be in percent (\"90%\"), allowing increasing and
+        decreasing volume by any amount desired (up to the point where the
+        output clips), or it can be \"max\" in which case the maximum
+        amplication is calculated that is possible without causing any
+        clipping.
+
+
+    ext[ension]=<ext>
+
+        Overrides output file extension in case output is a directory,
+        e.g. \"ext=mp3\". Has no effect if output is a file name.
 
 
 Valid profile names are:
@@ -35,189 +81,97 @@ Valid profile names are:
     aacstd  - Variable bitrate AAC, standard quality.
     aachigh - Variable bitrate AAC, high quality.
 
-    aacarc   - AAC with quality good enough for archiving music.
     archive  - FLAC lossless compression, suitable for archiving music.
 
-    speechlow  - Speech only, low quality (AAC HE mono).
-    speechstd  - Speech only, standard quality (AAC HE mono).
-    speechhigh - Speech only, high quality (AAC HE mono).
-
     webcast       - Webcast with low bitrate (Vorbis mono).
-    webcasthigh   - Webcast with higher bitrate (Vorbis mono).
-    webcasthq     - Webcast with low bitrate (Opus mono).
-    webcasthqhigh - Webcast with higher bitrate (Opus mono).
+    webcasthigh   - Webcast with high bitrate (Vorbis mono).
+    webcasthq     - Webcast with low bitrate, better quality (Opus mono).
+    webcasthqhigh - Webcast with high bitrate, better quality (Opus mono).
 
     transform - Copy audio data unmodified, just rewrite container.
 
     fixaac - Fix broken AAC streams with bad timing or bad average bitrate
              that transform cannot fix. All meta information will be lost!
-
-
-Volume can either be in percent, allowing increasing and decreasing volume by
-any amount desired (up to the point where the output clips), or it can be
-\"max\" in which case the maximum amplication is calculated that is possible
-without causing any clipping.
-
-
-The container format is guessed by the file extension of the output file. E.g.
-\".mp4\" generates an MPEG 4 container file, whereas \".mp3\" would generate a
-MP3 container, and \".aac\" a raw AAC data stream. Note that not all codecs can
-be used in all container formats.
-
-If output is a folder, the same file name as input will be used, except for
-the file extension which will be the default extension for the default
-container format of the chosen profile.
 "
-	printf "%s" "$syntax" >&2
-	exit 1
+    error "$syntax"
 }
 
 
-volume=""
-profile=""
-infile=""
-outfile=""
-outfileExt=""
+volume=
+outfileExt=
 
+profile=
 
-while [ -z "$outfile" ]
+output=
+inCount=0
+
+while [ -z "$output" ]
 do
-	if [ $# -lt 3 ]
-	then
-		badargs
-	fi
+    if [ $# -lt 3 ]
+    then
+        printf "%s\n" "Too little arguments!" >&2
+        badargs
+    fi
 
-	case "$1" in
+    case $1 in
 
-		"volume="*)
-			volume="$1"
-			shift
-		;;
+        "volume="*|"vol="*)
+            volume=$1
+            shift
+        ;;
 
-		*)
-			profile="$1"
-			infile="$2"
-			outfile="$3"
-		;;
-	esac
+        "extension="*|"ext="*)
+            outfileExt=$1
+            shift
+        ;;
+
+        *)
+            profile=$1
+            shift
+            inCount=$(( $# - 1 ))
+            eval output=\$$#
+        ;;
+    esac
 done
 
-
-case "$volume" in
-
-	"")
-		# No volume set - fine
-	;;
-
-	"volume=max")
-		volume=$(
-			ffmpeg -i "$infile" -filter:a volumedetect \
-				-f null /dev/null 2>&1 \
-			| grep max_volume \
-			| sed 's/.*max_volume: -\{0,1\}\([0-9.]\{1,\}\) dB$/\1/'
-		)
-		if [ "$volume" = "0.0" ]
-		then
-			volume=
-		else
-			volume="volume=${volume}dB"
-		fi
-	;;
-
-	"volume="*"%")
-		volume=${volume#"volume="}
-		volume=${volume%"%"}
-		[ "$volume" = 0 ] || volume="volume=$volume/100"
-	;;
-
-	*)
-		volume=${volume#"volume="}
-		echo "Bad volume value \"$volume\"!" >&1
-		exit 1
-	;;
-esac
-
-
-onexit()
-{
-	oldtraps=$(trap)
-	oldexit=$(echo "$oldtraps" \
-		| grep "EXIT$" \
-		| sed -E 's/^trap -- (.*) EXIT$/\1/')
-	if [ -n "$oldexit" ]
-	then
-		# shellcheck disable=SC2064
-		trap "eval $oldexit ; $1" EXIT
-	else
-		# shellcheck disable=SC2064
-		trap "$1" EXIT
-	fi
-}
-
-
-# Never decode or encode any video
-encargs="-vn"
-decargs="-vn"
-
-
-if [ "$volume" != "" ]
+if [ $inCount -gt 1 ] && [ ! -d "$output" ]
 then
-	if [ "$volume" = "0" ]
-	then
-		decargs="$decargs -an" # Don't even decode any audio
-	else
-		encargs="$encargs -filter:a \"$volume\""
-	fi
+    error "Multiple input files are only allowed if output is a directory!"
 fi
 
+volarg=
+case "$volume" in
 
-abspath()
-(
-	path=$1
+    "")
+        # No volume set - fine
+    ;;
 
-	if [ ! -e "$path" ]; then
-		return 1
-	fi
+    "volume=max"|"vol=max")
+        # We'll take care of that later
+        volume="max"
+    ;;
 
-	file=
-	dir="$path"
-	if [ ! -d "$dir" ]; then
-		file=$( basename "$dir" )
-		dir=$( dirname "$dir" )
-	fi
+    "volume="*"%"|"vol="*"%")
+        volarg=${volume#"volume="}
+        volarg=${volume%"%"}
+        volarg="-filter:a \"volume=$volarg/100\""
+    ;;
 
-	case "$dir" in
-		/*) ;;
-		*) dir="$( pwd )/$dir"
-	esac
-	result=$( cd "$dir" && pwd )
-
-	if [ -n "$file" ]; then
-		case "$result" in
-			*/) ;;
-			*) result="$result/"
-		esac
-		result="$result$file"
-	fi
-
-	printf "%s\n" "$result"
-)
-
-
-basenameWithoutExt()
-{
-	printf '%s' "$( basename "$1" | cut -f1 -d'.' )"
-}
+    *)
+        volume=${volume#"volume="}
+        error "Bad volume value \"$volume\"!"
+    ;;
+esac
 
 
 hascoder()
 {
-	encfound=$(ffmpeg -encoders 2>/dev/null | grep -E "^ [^ ]+ $1 ")
-	if [ -n "$encfound" ]
-	then
-		return 0
-	fi
-	return 1
+    encfound=$(ffmpeg -encoders 2>/dev/null | grep -E "^ [^ ]+ $1 ")
+    if [ -n "$encfound" ]
+    then
+        return 0
+    fi
+    return 1
 }
 
 
@@ -307,256 +261,288 @@ activate_aac()
 # $1 - vbr quality - 2 to 5, 5 being best
 activate_aacvbr()
 {
-	if hascoder "aac_at"
-	then
-		encargs="$encargs -c:a aac_at" # AAC audio
-		encargs="$encargs -aac_at_mode vbr" # Set VBR mode
-		case "$1" in
-			"5")
-				encargs="$encargs -qscale:a 3" # Approx. libfdk level 5
-			;;
+    if hascoder "aac_at"
+    then
+        encargs="$encargs -c:a aac_at" # AAC audio
+        encargs="$encargs -aac_at_mode vbr" # Set VBR mode
+        case "$1" in
+            "5")
+                encargs="$encargs -qscale:a 3" # Approx. libfdk level 5
+            ;;
 
-			"4")
-				encargs="$encargs -qscale:a 6" # Approx. libfdk level 4
-			;;
+            "4")
+                encargs="$encargs -qscale:a 6" # Approx. libfdk level 4
+            ;;
 
-			"3")
-				encargs="$encargs -qscale:a 8" # Approx. libfdk level 3
-			;;
+            "3")
+                encargs="$encargs -qscale:a 8" # Approx. libfdk level 3
+            ;;
 
-			"2")
-				encargs="$encargs -qscale:a 9" # Approx. libfdk level 2
-			;;
+            "2")
+                encargs="$encargs -qscale:a 10" # Approx. libfdk level 2
+            ;;
 
-		esac
-		return
-	fi
+        esac
+        return
+    fi
 
-	if hascoder "libfdk_aac"
-	then
-		encargs="$encargs -c:a libfdk_aac" # AAC audio
-		encargs="$encargs -vbr $1" # Set VBR quality
-		return
-	fi
+    if hascoder "libfdk_aac"
+    then
+        encargs="$encargs -c:a libfdk_aac" # AAC audio
+        encargs="$encargs -vbr $1" # Set VBR quality
+        return
+    fi
 
-	if hascoder "aac"
-	then
-		encargs="$encargs -c:a aac" # AAC audio
-		encargs="$encargs -aac_coder twoloop" # Treat speed for quality
-		# The VBR abilities of the aac codec suck horribly, that's probably
-		# why this is still an experimental feature as of 2022. Despite
-		# producing larger files than a lower CBR rate, they still sound much
-		# worse, so with that enocder, only CBR makes sense at the moment.
-		case "$1" in
-			"5")
-				encargs="$encargs -b:a 210" # Approx. libfdk level 5
-				;;
+    if hascoder "aac"
+    then
+        encargs="$encargs -c:a aac" # AAC audio
+        encargs="$encargs -aac_coder twoloop" # Treat speed for quality
 
-			"4")
-				encargs="$encargs -b:a 140k" # Approx. libfdk level 4
-				;;
+        # The VBR abilities of the aac codec suck horribly, that's probably
+        # why this is still an experimental feature as of 2022. Despite
+        # producing larger files than a lower CBR rate, they still sound much
+        # worse, so with that enocder, only CBR makes sense at the moment.
+        # We use slightly higher bitrates than VBR would use, just in case.
+        case "$1" in
+            "5")
+                encargs="$encargs -b:a 224k" # Approx. libfdk level 5 quality
+                ;;
 
-			"3")
-				encargs="$encargs -b:a 110k" # Approx. libfdk level 3
-				;;
+            "4")
+                encargs="$encargs -b:a 144k" # Approx. libfdk level 4 quality
+                ;;
 
-			"2")
-				encargs="$encargs -b:a 80k"  # Approx. libfdk level 2
-				;;
+            "3")
+                encargs="$encargs -b:a 112k" # Approx. libfdk level 3 quality
+                ;;
 
-		esac
-		return
-	fi
+            "2")
+                encargs="$encargs -b:a 80k"  # Approx. libfdk level 2 quality
 
-	echo "No AAC encoder found!" >&2
-	exit 1
+
+        esac
+        return
+    fi
+
+    echo "No AAC encoder found!" >&2
+    exit 1
 }
 
 
+# Never decode or encode any video
+encargs="-vn"
+decargs="-vn"
+
 case "$profile" in
 
-	"mp3poor")
-		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
-		encargs="$encargs -qscale:a 6" # Set VBR quality
-		encargs="$encargs -compression_level 0" # Highst compression quality
-		outfileExt="mp3"
-	;;
+    "mp3poor")
+        encargs="$encargs -codec:a libmp3lame" # Set liblame codec
+        encargs="$encargs -qscale:a 6" # Set VBR quality
+        encargs="$encargs -compression_level 0" # Highst compression quality
+        [ -z "$outfileExt" ] && outfileExt="mp3"
+    ;;
 
-	"mp3low")
-		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
-		encargs="$encargs -qscale:a 4" # Set VBR quality
-		encargs="$encargs -compression_level 0" # Highst compression quality
-		outfileExt="mp3"
-	;;
+    "mp3low")
+        encargs="$encargs -codec:a libmp3lame" # Set liblame codec
+        encargs="$encargs -qscale:a 4" # Set VBR quality
+        encargs="$encargs -compression_level 0" # Highst compression quality
+        [ -z "$outfileExt" ] && outfileExt="mp3"
+    ;;
 
-	"mp3std")
-		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
-		encargs="$encargs -qscale:a 2" # Set VBR quality
-		encargs="$encargs -compression_level 0" # Highst compression quality
-		outfileExt="mp3"
-	;;
+    "mp3std")
+        encargs="$encargs -codec:a libmp3lame" # Set liblame codec
+        encargs="$encargs -qscale:a 2" # Set VBR quality
+        encargs="$encargs -compression_level 0" # Highst compression quality
+        [ -z "$outfileExt" ] && outfileExt="mp3"
+    ;;
 
-	"mp3high")
-		encargs="$encargs -codec:a libmp3lame" # Set liblame codec
-		encargs="$encargs -qscale:a 0" # Set VBR quality
-		encargs="$encargs -compression_level 0" # Highst compression quality
-		outfileExt="mp3"
-	;;
-
-
-
-	"aacpoor")
-		activate_aacvbr 2
-		outfileExt="m4a"
-	;;
-
-	"aaclow")
-		activate_aacvbr 3
-		outfileExt="m4a"
-	;;
-
-	"aacstd")
-		activate_aacvbr 4
-		outfileExt="m4a"
-	;;
-
-	"aachigh")
-		activate_aacvbr 5
-		outfileExt="m4a"
-	;;
+    "mp3high")
+        encargs="$encargs -codec:a libmp3lame" # Set liblame codec
+        encargs="$encargs -qscale:a 0" # Set VBR quality
+        encargs="$encargs -compression_level 0" # Highst compression quality
+        [ -z "$outfileExt" ] && outfileExt="mp3"
+    ;;
 
 
-	"aacarc")
-		if hascoder "aac_at"
-		then
-			encargs="$encargs -c:a aac_at" # AAC audio
-			encargs="$encargs -aac_at_mode vbr" # Set VBR mode
-			encargs="$encargs -qscale:a 2" # Set VBR mode
-		else
-			activate_aac 256 stereo
-		fi
-		outfileExt="m4a"
-	;;
 
-	"archive")
-		encargs="$encargs -codec:a flac" # Set FLAC codec
-		encargs="$encargs -compression_level 12" # Use best compression
-		outfileExt="flac"
-	;;
+    "aacpoor")
+        activate_aacvbr 2
+        [ -z "$outfileExt" ] && outfileExt="m4a"
+    ;;
 
+    "aaclow")
+        activate_aacvbr 3
+        [ -z "$outfileExt" ] && outfileExt="m4a"
+    ;;
 
-	"speechlow")
-		activate_aac 24 mono yes
-		outfileExt="m4a"
-	;;
+    "aacstd")
+        activate_aacvbr 4
+        [ -z "$outfileExt" ] && outfileExt="m4a"
+    ;;
 
-	"speechstd")
-		activate_aac 32 mono yes
-		outfileExt="m4a"
-	;;
-
-	"speechhigh")
-		activate_aac 48 mono yes
-		outfileExt="m4a"
-	;;
+    "aachigh")
+        activate_aacvbr 5
+        [ -z "$outfileExt" ] && outfileExt="m4a"
+    ;;
 
 
-	"webcast")
-		encargs="$encargs -c:a libvorbis" # Vorbis audio
-		encargs="$encargs -b:a 32k" # Use 24 kbit/s for audio
-		encargs="$encargs -ar 22050" # Lower sampling rate to 22050 Hz
-		encargs="$encargs -ac 1" # Convert audio to mono
-		outfileExt="ogg"
-	;;
-
-	"webcasthigh")
-		encargs="$encargs -c:a libvorbis" # Vorbis audio
-		encargs="$encargs -b:a 56k" # Use 56 kbit/s for audio
-		encargs="$encargs -ac 1" # Convert audio to mono
-		outfileExt="ogg"
-	;;
-
-	"webcasthq")
-		encargs="$encargs -c:a libopus" # Opus audio
-		encargs="$encargs -b:a 24k" # Use 24 kbit/s for audio
-		encargs="$encargs -ar 24000" # Lower sampling rate to 24000 Hz
-		encargs="$encargs -ac 1" # Convert audio to mono
-		outfileExt="opus"
-	;;
-
-	"webcasthqhigh")
-		encargs="$encargs -c:a libopus" # Opus audio
-		encargs="$encargs -b:a 56k" # Use 24 kbit/s for audio
-		encargs="$encargs -ac 1" # Convert audio to mono
-		outfileExt="opus"
-	;;
+    "archive")
+        encargs="$encargs -codec:a flac" # Set FLAC codec
+        encargs="$encargs -compression_level 12" # Use best compression
+        [ -z "$outfileExt" ] && outfileExt="flac"
+    ;;
 
 
-	"transform")
-		if [ -d "$outfile" ]
-		then
-			echo "Transform requires output to be a file name!" >&2
-			exit 1
-		fi
-		encargs="$encargs -c:a copy" # Copy audio data
-	;;
+    "webcast")
+        encargs="$encargs -c:a libvorbis" # Vorbis audio
+        encargs="$encargs -b:a 24k" # Use 24 kbit/s for audio
+        encargs="$encargs -ar 22050" # Lower sampling rate to 22050 Hz
+        encargs="$encargs -ac 1" # Convert audio to mono
+        [ -z "$outfileExt" ] && outfileExt="ogg"
+    ;;
+
+    "webcasthigh")
+        encargs="$encargs -c:a libvorbis" # Vorbis audio
+        encargs="$encargs -b:a 32k" # Use 32 kbit/s for audio
+        encargs="$encargs -ac 1" # Convert audio to mono
+        [ -z "$outfileExt" ] && outfileExt="ogg"
+    ;;
+
+    "webcasthq")
+        encargs="$encargs -c:a libopus" # Opus audio
+        encargs="$encargs -b:a 24k" # Use 24 kbit/s for audio
+        encargs="$encargs -ar 24000" # Lower sampling rate to 24000 Hz
+        encargs="$encargs -ac 1" # Convert audio to mono
+        [ -z "$outfileExt" ] && outfileExt="opus"
+    ;;
+
+    "webcasthqhigh")
+        encargs="$encargs -c:a libopus" # Opus audio
+        encargs="$encargs -b:a 32k" # Use 32 kbit/s for audio
+        encargs="$encargs -ac 1" # Convert audio to mono
+        [ -z "$outfileExt" ] && outfileExt="opus"
+    ;;
 
 
-	"fixaac")
-		# For the case that output is a directory and it's thes same directory
-		# as input, we want some special magic here
-		if [ -d "$outfile" ]
-		then
-			indir=$( dirname "$infile" )
-			if [ "$(abspath "$indir")" = "$(abspath "$outfile")" ]
-			then
-				outfile="$outfile/$( basenameWithoutExt "$infile" ).fixed.m4a"
-			fi
-		fi
-	;;
+    "transform")
+        encargs="$encargs -c:a copy" # Copy audio data
+        if [ -z "$outfileExt" ]
+        then
+            echo "Profile \"transform\" requires \"extension\" option!" >&2
+            exit 1
+        fi
+    ;;
 
 
-	*)
-		echo "Unknown profile \"$profile\"!" >&1
-		exit 1
-	;;
+    "fixaac")
+        # This is a special case which is not even using $decargs and $encargs.
+    ;;
+
+
+    *)
+        echo "Unknown profile \"$profile\"!" >&1
+        exit 1
+    ;;
 esac
 
 
-if [ -d "$outfile" ]
-then
-	ext=""
-	[ -n "$outfileExt" ] && ext=".$outfileExt"
-	outfile="$outfile/$( basenameWithoutExt "$infile" )$ext"
-	if [ "$(abspath "$infile")" = "$(abspath "$outfile")" ]
-	then
-		echo "Input file cannot override itself!" >&1
-		exit 1
-	fi
-fi
+
+abspath()
+(
+    path=$1
+
+    if [ ! -e "$path" ]; then
+        return 1
+    fi
+
+    file=
+    dir="$path"
+    if [ ! -d "$dir" ]; then
+        file=$( basename "$dir" )
+        dir=$( dirname "$dir" )
+    fi
+
+    case "$dir" in
+        /*) ;;
+        *) dir="$( pwd )/$dir"
+    esac
+    result=$( cd "$dir" && pwd )
+
+    if [ -n "$file" ]; then
+        case "$result" in
+            */) ;;
+            *) result="$result/"
+        esac
+        result="$result$file"
+    fi
+
+    printf "%s\n" "$result"
+)
 
 
-callffmpeg()
+basenameWithoutExt()
 {
-	eval "ffmpeg $*"
+    printf '%s' "$( basename "$1" | cut -f1 -d'.' )"
 }
 
 
-case "$profile" in
+calcMaxVolume()
+{
+    printf "%s\n" "==> Analyzing audio, please wait..."
+    volarg=$(
+        ffmpeg -i "$1" -filter:a volumedetect \
+            -f null /dev/null 2>&1 \
+        | grep max_volume \
+        | sed 's/.*max_volume: -\{0,1\}\([0-9.]\{1,\}\) dB$/\1/'
+    )
+    if [ "$volarg" = "0.0" ]
+    then
+        printf "%s\n" "==> Volume already at maximum."
+        volarg=
+    else
+        printf "%s\n" "==> Emphasizing volume by $volarg dB."
+        volarg="volume=${volarg}dB"
+    fi
+}
 
-	"fixaac")
-		# Sometimes "transform" will already fix the stream when transforming
-		# from an AAC container to a container of the same kind but in some
-		# cases this doesn't work and then this trick will work:
-		ffmpeg -vn -i "$infile" -c:a copy -f adts - \
-			| ffmpeg -f aac -i - -c:a copy "$outfile"
-	;;
 
+while [ $inCount -gt 0 ]
+do
+    printf "\n%s\n" "====> Next File: $1"
 
-	*)
-		if="\"$infile\""
-		of="\"$outfile\""
+    [ "$volume" = "max" ] && calcMaxVolume "$1"
 
-		callffmpeg "$decargs" -i "$if" "$encargs" "$of"
-	;;
-esac
+    if [ -d "$output" ]
+    then
+        outfile="$output/$( basenameWithoutExt "$1" ).$outfileExt"
+        if [ "$(abspath "$1")" = "$(abspath "$outfile")" ]
+        then
+            echo "Input file cannot override itself!" >&2
+            exit 1
+        fi
+    else
+        outfile="$output"
+    fi
+
+    case "$profile" in
+
+        "fixaac")
+            # Sometimes "transform" will already fix the stream when
+            # transforming from an AAC container to a container of the same
+            # kind but in some cases this doesn't work and then this trick
+            # will work:
+            ffmpeg -vn -i "$1" -c:a copy -f adts - \
+                | ffmpeg -f aac -i - -c:a copy "$outfile"
+        ;;
+
+        *)
+            filterarg=
+            [ -n "$volarg" ] && filterarg="-filter:a $volarg"
+            eval ffmpeg "$decargs" -i "\"$1\"" \
+                "$encargs $filterarg" "\"$outfile"\"
+        ;;
+    esac
+    shift
+    inCount=$(( inCount - 1 ))
+    printf "\n\n"
+done
