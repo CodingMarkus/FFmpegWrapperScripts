@@ -226,81 +226,81 @@ hascoder()
 # ($3) - force HE/HEv2: "yes" or "no"; default is "no"
 activate_aac()
 {
-	if [ "$1" -lt 16 ]
-	then
-		echo "AAC bitrate too low!" >&2
-		exit 1
-	fi
+    if [ "$1" -lt 16 ]
+    then
+        echo "AAC bitrate too low!" >&2
+        exit 1
+    fi
 
-	if [ "${2:-"stereo"}" = "mono" ]
-	then
-		encargs="$encargs -ac 1" # Convert audio to mono
-	fi
+    if [ "${2:-"stereo"}" = "mono" ]
+    then
+        encargs="$encargs -ac 1" # Convert audio to mono
+    fi
 
-	encargs="$encargs -b:a ${1}k" # Set bitrate in kbit/s
+    encargs="$encargs -b:a ${1}k" # Set bitrate in kbit/s
 
-	if [ "$1" -lt 80 ] || [ "${3:-"no"}" = "yes" ]
-	then
-		if [ "${2:-"stereo"}" = "mono" ]
-		then
-			if hascoder "aac_at"
-			then
-				encargs="$encargs -c:a aac_at" # AAC audio
-				encargs="$encargs -profile:a 4" # Use HE encoding
-				return
-			fi
+    if [ "$1" -lt 80 ] || [ "${3:-"no"}" = "yes" ]
+    then
+        if [ "${2:-"stereo"}" = "mono" ]
+        then
+            if hascoder "aac_at"
+            then
+                encargs="$encargs -c:a aac_at" # AAC audio
+                encargs="$encargs -profile:a 4" # Use HE encoding
+                return
+            fi
 
-			if hascoder "libfdk_aac"
-			then
-				encargs="$encargs -c:a libfdk_aac" # AAC audio
-				encargs="$encargs -profile:a aac_he" # Use HE encoding
-				return
-			fi
-		fi
+            if hascoder "libfdk_aac"
+            then
+                encargs="$encargs -c:a libfdk_aac" # AAC audio
+                encargs="$encargs -profile:a aac_he" # Use HE encoding
+                return
+            fi
+        fi
 
-		if hascoder "aac_at"
-		then
-			encargs="$encargs -c:a aac_at" # AAC audio
-			encargs="$encargs -profile:a 28" # Use HEv2 encoding
-			return
-		fi
+        if hascoder "aac_at"
+        then
+            encargs="$encargs -c:a aac_at" # AAC audio
+            encargs="$encargs -profile:a 28" # Use HEv2 encoding
+            return
+        fi
 
-		if hascoder "libfdk_aac"
-		then
-			encargs="$encargs -c:a libfdk_aac" # AAC audio
-			encargs="$encargs -profile:a aac_he_v2" # Use HEv2 encoding
-			return
-		fi
+        if hascoder "libfdk_aac"
+        then
+            encargs="$encargs -c:a libfdk_aac" # AAC audio
+            encargs="$encargs -profile:a aac_he_v2" # Use HEv2 encoding
+            return
+        fi
 
-		if [ "${3:-"no"}" = "yes" ]
-		then
-			echo "No encoder with HE/HEv2 support found!" >&2
-			exit 1
-		fi
-	fi
+        if [ "${3:-"no"}" = "yes" ]
+        then
+            echo "No encoder with HE/HEv2 support found!" >&2
+            exit 1
+        fi
+    fi
 
-	if hascoder "aac_at"
-	then
-		encargs="$encargs -c:a aac_at" # AAC audio
-		encargs="$encargs -aac_at_mode abr" # Set ABR mode
-		return
-	fi
+    if hascoder "aac_at"
+    then
+        encargs="$encargs -c:a aac_at" # AAC audio
+        encargs="$encargs -aac_at_mode abr" # Set ABR mode
+        return
+    fi
 
-	if hascoder "libfdk_aac"
-	then
-		encargs="$encargs -c:a libfdk_aac" # AAC audio
-		return
-	fi
+    if hascoder "libfdk_aac"
+    then
+        encargs="$encargs -c:a libfdk_aac" # AAC audio
+        return
+    fi
 
-	if hascoder "aac"
-	then
-		encargs="$encargs -c:a aac" # AAC audio
-		encargs="$encargs -aac_coder twoloop" # Tread CPU time for quality
-		return
-	fi
+    if hascoder "aac"
+    then
+        encargs="$encargs -c:a aac" # AAC audio
+        encargs="$encargs -aac_coder twoloop" # Tread CPU time for quality
+        return
+    fi
 
-	echo "No AAC encoder found!" >&2
-	exit 1
+    echo "No AAC encoder found!" >&2
+    exit 1
 }
 
 
