@@ -28,27 +28,25 @@ Syntax:
 
 Valid profile names are:
 
-	vpoor - Very poor quality (H.264/AAC).
-    poor  - Poor quality (H.264/AAC).
     vlow  - Very low quality (H.264/AAC).
     low   - Low quality (H.264/AAC).
     std   - Standard quality (H.264/AAC).
     high  - High quality (H.264/AAC).
     vhigh - Very high quality (H.264/AAC).
 
-    tiny   - Tiny file size, < 1 MiByte/min (H.264/AAC).
-    vsmall - Very small file size, < 2 MiByte/min (H.264/AAC).
-    small  - Small file size, < 4 MiByte/min (H.264/AAC).
-    medium - Medium file size, < 8 MiByte/min (H.264/AAC).
-    big    - Big file size, < 12 MiByte/min (H.264/AAC).
-    vbig   - Very big file size, < 16 MiByte/min (H.264/AAC).
+	500k - Limit total bandwidth to 500kbit/s (H.264/AAC).
+	1m   - Limit total bandwidth to 1Mbit/s (H.264/AAC).
+	2m   - Limit total bandwidth to 2Mbit/s (H.264/AAC).
+	3m   - Limit total bandwidth to 2Mbit/s (H.264/AAC).
+	4m   - Limit total bandwidth to 4Mbit/s (H.264/AAC).
+	6m   - Limit total bandwidth to 6Mbit/s (H.264/AAC).
+	8m   - Limit total bandwidth to 8Mbit/s (H.264/AAC).
 
     scrcast - Screencast with very low bitrate (H.264/AAC).
     webcast - Web screencast with low bitrate (VP9/Opus).
 
     bug     - Screen recording for bug reporting (H.264).
-    bughq   - As bug but more quality and optimized for motion (H.264).
-	bugwebm - As bug but using VP9 and slightly better quality (VP9).
+	bugwebm - As bug but using VP9 (VP9).
 
     gif  - Animated GIF (or APNG).
     gifo - Animated GIF (or APNG) w/ optimized palette.
@@ -168,6 +166,7 @@ case "$volume" in
 	;;
 
 	"volume=max")
+		echo "Analyzing audio, please wait..."
 		volume=$(
 			ffmpeg -i "$infile" -filter:a volumedetect \
 				-f null /dev/null 2>&1 \
@@ -176,8 +175,10 @@ case "$volume" in
 		)
 		if [ "$volume" = "0.0" ]
 		then
+			echo "Volume already at maximum."
 			volume=
 		else
+			echo "Emphasizing volume by $volume dB."
 			volume="volume=${volume}dB"
 		fi
 	;;
@@ -380,33 +381,14 @@ activate_aac()
 
 case "$profile" in
 
-	"vpoor")
-		encargs="$encargs -c:v h264" # H.264 video
-		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -crf 40" # Encode all frames with same quality
-		encargs="$encargs -profile:v high" # Use H.264 high profile
-		encargs="$encargs -level:v 6.2" # Use level 6.2
-		activate_aac 24 mono
-		outfileExt="mp4"
-	;;
-
-	"poor")
-		encargs="$encargs -c:v h264" # H.264 video
-		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -crf 38" # Encode all frames with same quality
-		encargs="$encargs -profile:v high" # Use H.264 high profile
-		encargs="$encargs -level:v 6.2" # Use level 6.2
-		activate_aac 56
-		outfileExt="mp4"
-	;;
-
 	"vlow")
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -crf 36" # Encode all frames with same quality
+		encargs="$encargs -crf 34" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
-		encargs="$encargs -level:v 6.2" # Use level 6.2
-		activate_aac 64
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -preset veryslow" # Treat time for compression
+		activate_aac 96
 		outfileExt="mp4"
 	;;
 
@@ -416,7 +398,8 @@ case "$profile" in
 		encargs="$encargs -crf 28" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
-		activate_aac 80
+		encargs="$encargs -preset slower" # Treat time for compression
+		activate_aac 128
 		outfileExt="mp4"
 	;;
 
@@ -426,7 +409,8 @@ case "$profile" in
 		encargs="$encargs -crf 24" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
-		activate_aac 128
+		encargs="$encargs -preset slow" # Treat time for compression
+		activate_aac 144
 		outfileExt="mp4"
 	;;
 
@@ -437,7 +421,7 @@ case "$profile" in
 		encargs="$encargs -crf 21" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
-		encargs="$encargs -preset slow" # Treat time for compression
+		encargs="$encargs -preset slower" # Treat time for compression
 		activate_aac 160
 		outfileExt="mp4"
 	;;
@@ -448,43 +432,18 @@ case "$profile" in
 		encargs="$encargs -crf 18" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
-		encargs="$encargs -preset veryslow" # Treat more time for compression
+		encargs="$encargs -preset veryslow" # Treat time for compression
 		activate_aac 192
 		outfileExt="mp4"
 	;;
 
 
-	"tiny")
-		# 1 * 1024 * 1024 * 8 / 60 =  139'810
+	"500k")
+		encargs="$encargs -maxrate 500k" # Set max total bitrate
+		encargs="$encargs -bufsize 3M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -b:v 116" # Use 116 kbit/s for video
-		encargs="$encargs -profile:v high" # Use H.264 high profile
-		encargs="$encargs -level:v 5.2" # Use level 5.2
-		encargs="$encargs -preset veryslow" # Treat more time for quality
-		activate_aac 24 mono
-		twopass=1
-		outfileExt="mp4"
-	;;
-
-	"vsmall")
-		# 2 * 1024 * 1024 * 8 / 60 = 279'620
-		encargs="$encargs -c:v h264" # H.264 video
-		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -b:v 230" # Use 230 kbit/s for video
-		encargs="$encargs -profile:v high" # Use H.264 high profile
-		encargs="$encargs -level:v 5.2" # Use level 5.2
-		encargs="$encargs -preset veryslow" # Treat more time for quality
-		activate_aac 48
-		twopass=1
-		outfileExt="mp4"
-	;;
-
-	"small")
-		# 4 * 1024 * 1024 * 8 / 60 = 559'240
-		encargs="$encargs -c:v h264" # H.264 video
-		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -b:v 490" # Use 490 kbit/s for video
+		encargs="$encargs -b:v 436k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -preset veryslow" # Treat more time for quality
@@ -493,37 +452,54 @@ case "$profile" in
 		outfileExt="mp4"
 	;;
 
-	"medium")
-		# 8 * 1024 * 1024 * 8 / 60 = 1'118'481
+	"1m")
+		encargs="$encargs -maxrate 1M" # Set max total bitrate
+		encargs="$encargs -bufsize 2M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -b:v 1000k" # Use 1 Mbit/s for video
+		encargs="$encargs -b:v 904k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
-		encargs="$encargs -preset slow" # Treat more time for quality
-		activate_aac 80
+		encargs="$encargs -preset veryslow" # Treat more time for quality
+		activate_aac 96
 		twopass=1
 		outfileExt="mp4"
 	;;
 
-	"big")
-		# 12 * 1024 * 1024 * 8 / 60 = 1'677'721
+	"2m")
+		encargs="$encargs -maxrate 2M" # Set max total bitrate
+		encargs="$encargs -bufsize 2M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -b:v 1540k" # Use 1.540 Mbit/s for video
+		encargs="$encargs -b:v 1872k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
-		encargs="$encargs -preset slow" # Treat more time for quality
+		encargs="$encargs -preset slower" # Treat more time for quality
 		activate_aac 128
 		twopass=1
 		outfileExt="mp4"
 	;;
 
-	"vbig")
-		# 16 * 1024 * 1024 * 8 / 60 = 2'236'962
+	"3m")
+		encargs="$encargs -maxrate 3M" # Set max total bitrate
+		encargs="$encargs -bufsize 3M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -b:v 2064k" # Use 2.064 Mbit/s for video
+		encargs="$encargs -b:v 2856k" # Set video bitrate
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -preset slow" # Treat more time for quality
+		activate_aac 144
+		twopass=1
+		outfileExt="mp4"
+	;;
+
+	"4m")
+		encargs="$encargs -maxrate 4M" # Set max total bitrate
+		encargs="$encargs -bufsize 4M" # Set buffer size
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -b:v 3840k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		activate_aac 160
@@ -531,63 +507,40 @@ case "$profile" in
 		outfileExt="mp4"
 	;;
 
-
-	"scrcast")
-		encargs="$encargs -c:v h264" # H.265 video
-		encargs="$encargs -fpsmax 20" # Limit FPS to 20 or below
+	"6m")
+		encargs="$encargs -maxrate 6M" # Set max total bitrate
+		encargs="$encargs -bufsize 4M" # Set buffer size
+		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -b:v 80k" # 80 kbit/s
-		encargs="$encargs -profile:v main" # Use H.264 main profile
+		encargs="$encargs -b:v 5808k" # Set video bitrate
+		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
-		encargs="$encargs -preset veryslow" # Treat more time for quality
-		encargs="$encargs -tune animation" # Tune animated large flat areas
-		activate_aac 24 mono yes
+		activate_aac 192
 		twopass=1
 		outfileExt="mp4"
 	;;
 
-	"webcast")
-		encargs="$encargs -c:v vp9" # vp9 video
-		encargs="$encargs -fpsmax 20" # Limit FPS to 20 or below
+	"8m")
+		encargs="$encargs -maxrate 8M" # Set max total bitrate
+		encargs="$encargs -bufsize 4M" # Set buffer size
+		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -b:v 64k" # 64k kbit/s
-		encargs="$encargs -tune-content screen" # Tune for screen recording
-		encargs="$encargs -cpu-used 0" # Trade speed for quality
-		encargs="$encargs -lag-in-frames 25" # Trade lag for quality
-		encargs="$encargs -auto-alt-ref 6" # Trade lag for quality
-		encargs="$encargs -row-mt 1" # Use multiple cores more aggressively
-		# --- Opus Audio ---
-		encargs="$encargs -c:a libopus" # Opus audio
-		encargs="$encargs -b:a 16k" # Use 16 kbit/s for audio
-		encargs="$encargs -ac 1" # Convert audio to mono
-		# --- Two Pass Speed Up Hack ---
-		twopass="$twopass -cpu-used 8" # Speed up first pass
-		# ---
-		# Sometimes this file is created in current working dir.
-		# Delete it just in case.
-		onexit "rm -f opsnr.stt"
+		encargs="$encargs -b:v 7808k" # Set video bitrate
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		activate_aac 192
+		twopass=1
+		outfileExt="mp4"
 	;;
+
 
 
 	"bug")
 		decargs="$decargs -an" # Don't even decode audio
 		encargs="$encargs -c:v h264" # H.264 video
-		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
+		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -crf 40" # Encode all frames with same quality
-		encargs="$encargs -profile:v high" # Use H.264 high profile
-		encargs="$encargs -level:v 5.2" # Use level 5.2
-		encargs="$encargs -tune stillimage" # Tune for little motion
-		encargs="$encargs -preset veryslow" # Treat more time for quality
-		outfileExt="mp4"
-	;;
-
-	"bughq")
-		decargs="$decargs -an" # Don't even decode audio
-		encargs="$encargs -c:v h264" # H.264 video
-		encargs="$encargs -fpsmax 20" # Limit FPS to 20 or below
-		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -crf 36" # Encode all frames with same quality
+		encargs="$encargs -crf 38" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -tune animation" # Tune for animated large flat areas
