@@ -299,6 +299,8 @@ activate_aac()
 	if [ "${2:-"stereo"}" = "mono" ]
 	then
 		encargs="$encargs -ac 1" # Convert audio to mono
+	else
+		encargs="$encargs -ac 2" # Convert audio to stereo
 	fi
 
 	encargs="$encargs -b:a ${1}k" # Set bitrate in kbit/s
@@ -310,14 +312,14 @@ activate_aac()
 			if hascoder "aac_at"
 			then
 				encargs="$encargs -c:a aac_at" # AAC audio
-				encargs="$encargs -profile:a 4" # Use HE encoding
+				encargs="$encargs -profile:a 28" # Use HEv2 encoding
 				return
 			fi
 
 			if hascoder "libfdk_aac"
 			then
 				encargs="$encargs -c:a libfdk_aac" # AAC audio
-				encargs="$encargs -profile:a aac_he" # Use HE encoding
+				encargs="$encargs -profile:a aac_he_v2" # Use HEv2 encoding
 				return
 			fi
 		fi
@@ -325,14 +327,14 @@ activate_aac()
 		if hascoder "aac_at"
 		then
 			encargs="$encargs -c:a aac_at" # AAC audio
-			encargs="$encargs -profile:a 28" # Use HEv2 encoding
+			encargs="$encargs -profile:a 4" # Use HE encoding
 			return
 		fi
 
 		if hascoder "libfdk_aac"
 		then
 			encargs="$encargs -c:a libfdk_aac" # AAC audio
-			encargs="$encargs -profile:a aac_he_v2" # Use HEv2 encoding
+			encargs="$encargs -profile:a aac_he" # Use HE encoding
 			return
 		fi
 
@@ -340,6 +342,14 @@ activate_aac()
 		then
 			echo "No encoder with HE/HEv2 support found!" >&2
 			exit 1
+		fi
+
+		# Fallback to non HE/HEv2 if allowed
+		if hascoder "aac"
+		then
+			encargs="$encargs -c:a aac" # AAC audio
+			encargs="$encargs -aac_coder twoloop" # Tread CPU time for quality
+			return
 		fi
 	fi
 
