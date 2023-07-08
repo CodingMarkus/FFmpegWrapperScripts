@@ -3,7 +3,6 @@
 ## Help as shown by `enc.video`
 
 ```
-
 Syntax:
 
     ./enc.video [scale=<w:h|x%|keyword>] [volume=<p%|max>]
@@ -14,29 +13,25 @@ Syntax:
 
 Valid profile names are:
 
-	vpoor - Very poor quality (H.264/AAC).
-    poor  - Poor quality (H.264/AAC).
     vlow  - Very low quality (H.264/AAC).
     low   - Low quality (H.264/AAC).
     std   - Standard quality (H.264/AAC).
     high  - High quality (H.264/AAC).
     vhigh - Very high quality (H.264/AAC).
 
-    tiny   - Tiny file size, < 1 MiByte/min (H.264/AAC).
-    vsmall - Very small file size, < 2 MiByte/min (H.264/AAC).
-    small  - Small file size, < 4 MiByte/min (H.264/AAC).
-    medium - Medium file size, < 8 MiByte/min (H.264/AAC).
-    big    - Big file size, < 12 MiByte/min (H.264/AAC).
-    vbig   - Very big file size, < 16 MiByte/min (H.264/AAC).
+	500k - Limit total bandwidth to 500kbit/s (H.264/AAC).
+	1m   - Limit total bandwidth to 1Mbit/s (H.264/AAC).
+	2m   - Limit total bandwidth to 2Mbit/s (H.264/AAC).
+	3m   - Limit total bandwidth to 2Mbit/s (H.264/AAC).
+	4m   - Limit total bandwidth to 4Mbit/s (H.264/AAC).
+	6m   - Limit total bandwidth to 6Mbit/s (H.264/AAC).
+	8m   - Limit total bandwidth to 8Mbit/s (H.264/AAC).
 
-    scrcast   - Screencast with very low bitrate (H.264/AAC).
-    scrcasthq - Screencast with very low bitrate (H.265/AAC).
-    webcast   - Web screencast with low bitrate (VP9/Vorbis).
+    scrcast - Screencast with very low bitrate (H.264/AAC).
+    webcast - Web screencast with low bitrate (VP9/Opus).
 
-    bug    - Screen recording for bug reporting (H.264).
-    bugm   - As bug but if lots of motion is visible (H.264).
-    bughq  - Screen recording for bug reporting (H.265).
-    bughqm - As bughq but if lots of motion is visible (H.265).
+    bug     - Screen recording for bug reporting (H.264).
+	bugwebm - As bug but using VP9 (VP9).
 
     gif  - Animated GIF (or APNG).
     gifo - Animated GIF (or APNG) w/ optimized palette.
@@ -65,6 +60,10 @@ The container format is guessed by the file extension of the output file. E.g.
 Matroska container, and ".webm" a WebM container. Similar using ".apng"
 with the GIF profile creates an animated PNG file. Note that not all codecs can
 be used in all container formats.
+
+If output is a folder, the same file name as input will be used, except for
+the file extension which will be the default extension for the default
+container format of the chosen profile.
 ```
 
 # Help as shown by `enc.audio` Script
@@ -72,7 +71,42 @@ be used in all container formats.
 ```
 Syntax:
 
-    ./enc.audio [volume=<p%|max>] <profile> <input> <output>
+    enc.audio [options] <profile> <input_file> <output_file>
+
+    enc.audio [options] <profile> <input_file> ... <output_directory>
+
+
+The container format is guessed by the file extension of the output file.
+E.g. ".mp4" generates an MPEG 4 container file, whereas ".mp3" would
+generate a MP3 container, and ".aac" a raw AAC data stream.
+
+If output is a directory, the same file name as input will be used, except for
+the file extension which will be the default extension for the default
+container format of the chosen profile, unless overridden by the "extension"
+option.
+
+NOTE:
+Not all codecs can be used in all container formats!
+
+
+Options:
+
+    NOTE:
+    Options can be shortened. E.g. "vol" and "volume" are the same option.
+
+    vol[ume]=<p%|max>
+
+        Volume can either be in percent ("90%"), allowing increasing and
+        decreasing volume by any amount desired (up to the point where the
+        output clips), or it can be "max" in which case the maximum
+        amplication is calculated that is possible without causing any
+        clipping.
+
+
+    ext[ension]=<ext>
+
+        Overrides output file extension in case output is a directory,
+        e.g. "ext=mp3". Has no effect if output is a file name.
 
 
 Valid profile names are:
@@ -87,34 +121,17 @@ Valid profile names are:
     aacstd  - Variable bitrate AAC, standard quality.
     aachigh - Variable bitrate AAC, high quality.
 
-    aacarc   - AAC with quality good enough for archiving music.
     archive  - FLAC lossless compression, suitable for archiving music.
 
-    speechlow  - Speech only, low quality (AAC HE mono).
-    speechstd  - Speech only, standard quality (AAC HE mono).
-    speechhigh - Speech only, high quality (AAC HE mono).
-
     webcast       - Webcast with low bitrate (Vorbis mono).
-    webcasthigh   - Webcast with higher bitrate (Vorbis mono).
-    webcasthq     - Webcast with low bitrate (Opus mono).
-    webcasthqhigh - Webcast with higher bitrate (Opus mono).
+    webcasthigh   - Webcast with high bitrate (Vorbis mono).
+    webcasthq     - Webcast with low bitrate, better quality (Opus mono).
+    webcasthqhigh - Webcast with high bitrate, better quality (Opus mono).
 
     transform - Copy audio data unmodified, just rewrite container.
 
     fixaac - Fix broken AAC streams with bad timing or bad average bitrate
              that transform cannot fix. All meta information will be lost!
-
-
-Volume can either be in percent, allowing increasing and decreasing volume by
-any amount desired (up to the point where the output clips), or it can be
-"max" in which case the maximum amplication is calculated that is possible
-without causing any clipping.
-
-
-The container format is guessed by the file extension of the output file. E.g.
-".mp4" generates an MPEG 4 container file, whereas ".mp3" would generate a
-MP3 container, and ".aac" a raw AAC data stream. Note that not all codecs can
-be used in all container formats.
 ```
 
 ## Notes about FFmpeg AAC
