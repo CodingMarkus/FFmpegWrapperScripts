@@ -115,13 +115,21 @@ do
 
     case $1 in
 
-        "volume="*|"vol="*)
-            volume=$1
+        "vol="*)
+            volume=${1#"vol="}
+            shift
+        ;;
+        "volume="*)
+            volume=${1#"volume="}
             shift
         ;;
 
-        "extension="*|"ext="*)
-            outfileExt=$1
+        "ext="*)
+            outfileExt=${1#"ext="}
+            shift
+        ;;
+        "extension="*)
+            outfileExt=${1#"extension="}
             shift
         ;;
 
@@ -129,7 +137,7 @@ do
             profile=$1
             shift
             inCount=$(( $# - 1 ))
-            eval output=\$$#
+            eval "output=\${$#}"
         ;;
     esac
 done
@@ -146,19 +154,17 @@ case "$volume" in
         # No volume set - fine
     ;;
 
-    "volume=max"|"vol=max")
+    "max")
         # We'll take care of that later
         volume="max"
     ;;
 
-    "volume="*"%"|"vol="*"%")
-        volarg=${volume#"volume="}
+    *"%")
         volarg=${volume%"%"}
-        volarg="-filter:a \"volume=$volarg/100\""
+        volarg="volume=$volarg/100"
     ;;
 
     *)
-        volume=${volume#"volume="}
         error "Bad volume value \"$volume\"!"
     ;;
 esac
@@ -446,6 +452,7 @@ case "$profile" in
 
     "fixaac")
         # This is a special case which is not even using $decargs and $encargs.
+        [ -z "$outfileExt" ] && outfileExt="m4a"
     ;;
 
 
