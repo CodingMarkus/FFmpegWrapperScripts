@@ -1,17 +1,28 @@
 #!/bin/sh
 
-set -e
+set -e -u
 
 
-noffmpeg()
+error()
 {
-	echo "ffmpeg not found in \$PATH!" >&2
-	exit 1
+    case $1 in
+        "
+"*) ;;
+        *) printf '\n' >&2
+    esac
+
+    printf '%s' "$1" >&2
+
+    case $1 in
+        *"
+") ;;
+        *) printf '\n' >&2
+    esac
+    exit 1
 }
 
 
-# Check if ffmpeg is even installed on found in PATH
-command -v ffmpeg >/dev/null || noffmpeg
+command -v ffmpeg >/dev/null || error "ffmpeg not found in \$PATH!"
 
 
 badargs()
@@ -20,10 +31,48 @@ badargs()
 	syntax="
 Syntax:
 
-    $bin [scale=<w:h|x%|keyword>] [volume=<p%|max>]
-        <profile> <input> <output>
+    $bin [options] <profile> <input_file> <output_file>
 
-    (order of scale and volume is irrelevant)
+    $bin [options] <profile> <input_file> ... <output_directory>
+
+The container format is guessed by the file extension of the output file.
+E.g. \".mp4\" generates an MPEG 4 container file, whereas \".webm\" would
+generate a WEBM container, and \".mov\" would create a MOV container.
+
+If output is a directory, the same file name as input will be used, except for
+the file extension which will be the default extension for the default
+container format of the chosen profile, unless overridden by the \"extension\"
+option.
+
+Options:
+
+    NOTE:
+    Options can be shortened. E.g. \"vol\" and \"volume\" are the same option.
+
+    sc[ale]=half|quarter|double|x%|w:h
+
+        half    - Halves the video resolution.
+        quarter - Quarters the video resolution.
+        double  - Doubles the video resolution.
+        x%      - Scales the video by x percent (up or down).
+        w:h     - Scales to width (w) and height (h).
+                  Set either one to -1 and it will be calculated by the other
+                  value to maintain the video aspect ratio.
+
+
+    vol[ume]=<p%|max>
+
+        Volume can either be in percent (\"90%\"), allowing increasing and
+        decreasing volume by any amount desired (up to the point where the
+        output clips), or it can be \"max\" in which case the maximum
+        amplication is calculated that is possible without causing any
+        clipping.
+
+
+    ext[ension]=<ext>
+
+        Overrides output file extension in case output is a directory,
+        e.g. \"ext=mp3\". Has no effect if output is a file name.
 
 
 Valid profile names are:
@@ -52,149 +101,131 @@ Valid profile names are:
     gifo - Animated GIF (or APNG) w/ optimized palette.
 
     transform - Copy audio/video data unmodified, just rewrite container.
-
-
-Scale can either provide both, width (w) and height (h) or only one of both by
-setting the other one to -1 in which case the aspect ratio is kept.
-Alternatively, the following special keyword values are supported:
-
-    half    - Halves the video resolution.
-    quarter - Quarters the video resolution.
-    double  - Doubles the video resolution.
-    x%      - Scales the video by x percent (up or down).
-
-
-Volume can either be in percent, allowing increasing and decreasing volume by
-any amount desired (up to the point where the output clips), or it can be
-\"max\" in which case the maximum amplication is calculated that is possible
-without causing any clipping.
-
-
-The container format is guessed by the file extension of the output file. E.g.
-\".mp4\" generates an MPEG 4 container file, whereas \".mkv\" would generate a
-Matroska container, and \".webm\" a WebM container. Similar using \".apng\"
-with the GIF profile creates an animated PNG file. Note that not all codecs can
-be used in all container formats.
-
-If output is a folder, the same file name as input will be used, except for
-the file extension which will be the default extension for the default
-container format of the chosen profile.
 "
-	printf "%s" "$syntax" >&2
-	exit 1
+	error "$syntax"
 }
 
 
-scale=""
-volume=""
-profile=""
-infile=""
-outfile=""
-outfileExt=""
+scale=
+volume=
+outfileExt=
 
-while [ -z "$outfile" ]
+profile=
+
+output=
+inCount=0
+
+
+while [ -z "$output" ]
 do
-	if [ $# -lt 3 ]
-	then
-		badargs
-	fi
+    if [ $# -lt 3 ]
+    then
+        printf "%s\n" "Too little arguments!" >&2
+        badargs
+    fi
 
-	case "$1" in
+    case $1 in
+
+		"sc="*)
+			scale=${1#"sc="}
+			shift
+		;;
 		"scale="*)
-			scale="$1"
+			scale=${1#"scale="}
 			shift
 		;;
 
-		"volume="*)
-			volume="$1"
-			shift
-		;;
+        "vol="*)
+            volume=${1#"vol="}
+            shift
+        ;;
+        "volume="*)
+            volume=${1#"volume="}
+            shift
+        ;;
 
-		*)
-			profile="$1"
-			infile="$2"
-			outfile="$3"
-		;;
-	esac
+        "ext="*)
+            outfileExt=${1#"ext="}
+            shift
+        ;;
+        "extension="*)
+            outfileExt=${1#"extension="}
+            shift
+        ;;
+
+        *)
+            profile=$1
+            shift
+            inCount=$(( $# - 1 ))
+            eval "output=\${$#}"
+        ;;
+    esac
 done
 
+if [ $inCount -gt 1 ] && [ ! -d "$output" ]
+then
+    error "Multiple input files are only allowed if output is a directory!"
+fi
 
+volarg=
+case "$volume" in
+
+    "")
+        # No volume set - fine
+    ;;
+
+    "max")
+        # We'll take care of that later
+        volume="max"
+    ;;
+
+    *"%")
+        volarg=${volume%"%"}
+        volarg="volume=$volarg/100"
+    ;;
+
+    *)
+        error "Bad volume value \"$volume\"!"
+    ;;
+esac
+
+
+scarg=
 case "$scale" in
 
 	"")
-		# No scale set - fine
+		# No scale set
 	;;
 
-	"scale="*":"*)
-		# Width and height set - fine
+	*":"*)
+		scarg="scale=$scale"
+		# Width and height set
 	;;
 
-	"scale=half")
-		scale="scale=0.5*iw:-1"
+	"half")
+		scarg="scale=0.5*iw:-1"
 	;;
 
-	"scale=quarter")
-		scale="scale=0.25*iw:-1"
+	"quarter")
+		scarg="scale=0.25*iw:-1"
 	;;
 
-	"scale=double")
-		scale="scale=2*iw:-1"
+	"double")
+		scarg="scale=2*iw:-1"
 	;;
 
-	"scale="*"%")
-		scale=${scale#"scale="}
-		scale=${scale%"%"}
-		scale="scale=$scale/100*iw:-1"
-	;;
-
-	*)
-		scale=${scale#"scale="}
-		echo "Bad scale value \"$scale\"!" >&1
-		exit 1
-	;;
-esac
-
-[ -z "$scale" ] || \
-	scale="$scale:force_original_aspect_ratio=decrease:force_divisible_by=8"
-
-
-
-case "$volume" in
-
-	"")
-		# No volume set - fine
-	;;
-
-	"volume=max")
-		echo "Analyzing audio, please wait..."
-		volume=$(
-			ffmpeg -i "$infile" -filter:a volumedetect \
-				-f null /dev/null 2>&1 \
-			| grep max_volume \
-			| sed 's/.*max_volume: -\{0,1\}\([0-9.]\{1,\}\) dB$/\1/'
-		)
-		if [ "$volume" = "0.0" ]
-		then
-			echo "Volume already at maximum."
-			volume=
-		else
-			echo "Emphasizing volume by $volume dB."
-			volume="volume=${volume}dB"
-		fi
-	;;
-
-	"volume="*"%")
-		volume=${volume#"volume="}
-		volume=${volume%"%"}
-		[ "$volume" = 0 ] || volume="volume=$volume/100"
+	*"%")
+		scarg=${scale%"%"}
+		scarg="scale=$scarg/100*iw:-1"
 	;;
 
 	*)
-		volume=${volume#"volume="}
-		echo "Bad volume value \"$volume\"!" >&1
-		exit 1
+		error "Bad scale value \"$scale\"!"
 	;;
 esac
+
+[ -z "$scarg" ] || \
+	scarg="$scarg:force_original_aspect_ratio=decrease:force_divisible_by=8"
 
 
 onexit()
@@ -217,62 +248,6 @@ onexit()
 encargs=""
 decargs=""
 twopass=""
-
-
-if [ "$scale" != "" ]
-then
-	encargs="$encargs -filter:v \"$scale\""
-fi
-
-
-if [ "$volume" != "" ]
-then
-	if [ "$volume" = "0" ]
-	then
-		decargs="$decargs -an" # Don't even decode any audio
-	else
-		encargs="$encargs -filter:a \"$volume\""
-	fi
-fi
-
-
-abspath()
-(
-	path=$1
-
-	if [ ! -e "$path" ]; then
-		return 1
-	fi
-
-	file=
-	dir="$path"
-	if [ ! -d "$dir" ]; then
-		file=$( basename "$dir" )
-		dir=$( dirname "$dir" )
-	fi
-
-	case "$dir" in
-		/*) ;;
-		*) dir="$( pwd )/$dir"
-	esac
-	result=$( cd "$dir" && pwd )
-
-	if [ -n "$file" ]; then
-		case "$result" in
-			*/) ;;
-			*) result="$result/"
-		esac
-		result="$result$file"
-	fi
-
-	printf "%s\n" "$result"
-)
-
-
-basenameWithoutExt()
-{
-	printf '%s' "$( basename "$1" | cut -f1 -d'.' )"
-}
 
 
 hascoder()
@@ -382,63 +357,79 @@ activate_aac()
 case "$profile" in
 
 	"vlow")
+		# Video
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 34" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -preset veryslow" # Treat time for compression
+		# Audio
 		activate_aac 96
-		outfileExt="mp4"
+		# Other
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 	"low")
+		# Video
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 28" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -preset slower" # Treat time for compression
+		# Audio
 		activate_aac 128
-		outfileExt="mp4"
+		# Other
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 	"std")
+		# Video
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 24" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -preset slow" # Treat time for compression
+		# Audio
 		activate_aac 144
-		outfileExt="mp4"
+		# Other
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 
 	"high")
+		# Video
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 21" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -preset slower" # Treat time for compression
+		# Audio
 		activate_aac 160
-		outfileExt="mp4"
+		# Other
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 	"vhigh")
+		# Video
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 18" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -preset veryslow" # Treat time for compression
+		# Audio
 		activate_aac 192
-		outfileExt="mp4"
+		# Other
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 
 	"500k")
+		# Video
 		encargs="$encargs -maxrate 500k" # Set max total bitrate
 		encargs="$encargs -bufsize 3M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
@@ -447,12 +438,15 @@ case "$profile" in
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -preset veryslow" # Treat more time for quality
+		# Audio
 		activate_aac 64
+		# Other
 		twopass=1
-		outfileExt="mp4"
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 	"1m")
+		# Video
 		encargs="$encargs -maxrate 1M" # Set max total bitrate
 		encargs="$encargs -bufsize 2M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
@@ -461,12 +455,15 @@ case "$profile" in
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -preset veryslow" # Treat more time for quality
+		# Audio
 		activate_aac 96
+		# Other
 		twopass=1
-		outfileExt="mp4"
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 	"2m")
+		# Video
 		encargs="$encargs -maxrate 2M" # Set max total bitrate
 		encargs="$encargs -bufsize 2M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
@@ -475,12 +472,15 @@ case "$profile" in
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -preset slower" # Treat more time for quality
+		# Audio
 		activate_aac 128
+		# Other
 		twopass=1
-		outfileExt="mp4"
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 	"3m")
+		# Video
 		encargs="$encargs -maxrate 3M" # Set max total bitrate
 		encargs="$encargs -bufsize 3M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
@@ -489,12 +489,15 @@ case "$profile" in
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -preset slow" # Treat more time for quality
+		# Audio
 		activate_aac 144
+		# Other
 		twopass=1
-		outfileExt="mp4"
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 	"4m")
+		# Video
 		encargs="$encargs -maxrate 4M" # Set max total bitrate
 		encargs="$encargs -bufsize 4M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
@@ -502,12 +505,15 @@ case "$profile" in
 		encargs="$encargs -b:v 3840k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
+		# Audio
 		activate_aac 160
+		# Other
 		twopass=1
-		outfileExt="mp4"
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 	"6m")
+		# Video
 		encargs="$encargs -maxrate 6M" # Set max total bitrate
 		encargs="$encargs -bufsize 4M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
@@ -515,12 +521,15 @@ case "$profile" in
 		encargs="$encargs -b:v 5808k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
+		# Audio
 		activate_aac 192
+		# Other
 		twopass=1
-		outfileExt="mp4"
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 	"8m")
+		# Video
 		encargs="$encargs -maxrate 8M" # Set max total bitrate
 		encargs="$encargs -bufsize 4M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
@@ -528,30 +537,37 @@ case "$profile" in
 		encargs="$encargs -b:v 7808k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
+		# Audio
 		activate_aac 192
+		# Other
 		twopass=1
-		outfileExt="mp4"
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 
-
-	"bug")
+	"scrcast")
+		# Video
 		decargs="$decargs -an" # Don't even decode audio
 		encargs="$encargs -c:v h264" # H.264 video
-		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
+		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 38" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -tune animation" # Tune for animated large flat areas
 		encargs="$encargs -preset veryslow" # Treat more time for quality
-		outfileExt="mp4"
+		# Audio
+		activate_aac 24 mono
+		encargs="$encargs -ar 22050" # Lower sampling rate to 22050 Hz
+		# Other
+		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
-	"bugwebm")
+	"webcast")
+		# Video
 		decargs="$decargs -an" # Don't even decode audio
 		encargs="$encargs -c:v vp9" # VP9 video
-		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
+		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 56" # Encode all frames with same quality
 		encargs="$encargs -tune-content screen" # Tune for screen recording
@@ -559,99 +575,214 @@ case "$profile" in
 		encargs="$encargs -lag-in-frames 25" # Trade lag for quality
 		encargs="$encargs -auto-alt-ref 6" # Trade lag for quality
 		encargs="$encargs -row-mt 1" # Use multiple cores more aggressively
-		# ---
-		# Sometimes this file is created in current working dir.
-		# Delete it just in case.
+		# Audio
+        encargs="$encargs -c:a libopus" # Opus audio
+        encargs="$encargs -b:a 24k" # Set bitrate
+        encargs="$encargs -ar 24000" # Lower sampling rate to 24000 Hz
+        encargs="$encargs -ac 1" # Convert audio to mono
+		# Other
+		[ -z "$outfileExt" ] && outfileExt="webm"
+		onexit "rm -f opsnr.stt"
+	;;
+
+
+	"bug")
+		# Video
+		decargs="$decargs -an" # Don't even decode audio
+		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -crf 38" # Encode all frames with same quality
+		encargs="$encargs -profile:v high" # Use H.264 high profile
+		encargs="$encargs -level:v 5.2" # Use level 5.2
+		encargs="$encargs -tune animation" # Tune for animated large flat areas
+		encargs="$encargs -preset veryslow" # Treat more time for quality
+		[ -z "$outfileExt" ] && outfileExt="mp4"
+	;;
+
+	"bugwebm")
+		# Video
+		decargs="$decargs -an" # Don't even decode audio
+		encargs="$encargs -c:v vp9" # VP9 video
+		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
+		encargs="$encargs -vsync vfr" # Allow varible frame rate
+		encargs="$encargs -crf 56" # Encode all frames with same quality
+		encargs="$encargs -tune-content screen" # Tune for screen recording
+		encargs="$encargs -cpu-used 0" # Trade speed for quality
+		encargs="$encargs -lag-in-frames 25" # Trade lag for quality
+		encargs="$encargs -auto-alt-ref 6" # Trade lag for quality
+		encargs="$encargs -row-mt 1" # Use multiple cores more aggressively
+		# Other
+		[ -z "$outfileExt" ] && outfileExt="webm"
 		onexit "rm -f opsnr.stt"
 	;;
 
 
 	"gif")
+		# Video
 		decargs="$decargs -an" # Don't even decode audio
 		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
-		outfileExt="gif"
+		# Other
+		[ -z "$outfileExt" ] && outfileExt="gif"
 	;;
 
 	"gifo")
+		# Video
 		decargs="$decargs -an" # Don't even decode audio
 		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
-		outfileExt="gif"
+		# Other
+		[ -z "$outfileExt" ] && outfileExt="gif"
 	;;
 
 
 	"transform")
-		if [ -d "$outfile" ]
-		then
-			echo "Transform requires output to be a file name!" >&2
-			exit 1
-		fi
+        if [ -z "$outfileExt" ]
+        then
+            error "Profile \"transform\" requires \"extension\" option!"
+        fi
+        if [ -n "$scarg" ]
+        then
+            error "Profile \"transform\" does not support \"scale\" option!"
+        fi
+        if [ -n "$volarg" ]
+        then
+            error "Profile \"transform\" does not support \"volume\" option!"
+        fi
 		encargs="$encargs -c:v copy" # Copy video data
 		encargs="$encargs -c:a copy" # Copy audio data
 		;;
 
 
 	*)
-		echo "Unknown profile \"$profile\"!" >&1
-		exit 1
+		error "Unknown profile \"$profile\"!"
 	;;
 esac
 
 
-if [ -d "$outfile" ]
-then
-	ext=""
-	[ -n "$outfileExt" ] && ext=".$outfileExt"
-	outfile="$outfile/$( basenameWithoutExt "$infile" )$ext"
-	if [ "$(abspath "$infile")" = "$(abspath "$outfile")" ]
-	then
-		echo "Input file cannot override itself!" >&1
-		exit 1
-	fi
-fi
+abspath()
+(
+    path=$1
+
+    if [ ! -e "$path" ]; then
+        return 1
+    fi
+
+    file=
+    dir="$path"
+    if [ ! -d "$dir" ]; then
+        file=$( basename "$dir" )
+        dir=$( dirname "$dir" )
+    fi
+
+    case "$dir" in
+        /*) ;;
+        *) dir="$( pwd )/$dir"
+    esac
+    result=$( cd "$dir" && pwd )
+
+    if [ -n "$file" ]; then
+        case "$result" in
+            */) ;;
+            *) result="$result/"
+        esac
+        result="$result$file"
+    fi
+
+    printf "%s\n" "$result"
+)
 
 
-tempdir=$(mktemp -d)
-onexit "rm -r '$tempdir'"
-
-
-callffmpeg()
+basenameWithoutExt()
 {
-	eval "ffmpeg $*"
+    printf '%s' "$( basename "$1" | cut -f1 -d'.' )"
 }
 
 
-if="\"$infile\""
-of="\"$outfile\""
+calcMaxVolume()
+{
+    printf "%s\n" "==> Analyzing audio, please wait..."
+    volarg=$(
+        ffmpeg -i "$1" -filter:a volumedetect \
+            -f null /dev/null 2>&1 \
+        | grep max_volume \
+        | sed 's/.*max_volume: -\{0,1\}\([0-9.]\{1,\}\) dB$/\1/'
+    )
+    if [ "$volarg" = "0.0" ]
+    then
+        printf "%s\n" "==> Volume already at maximum."
+        volarg=
+    else
+        printf "%s\n" "==> Emphasizing volume by $volarg dB."
+        volarg="volume=${volarg}dB"
+    fi
+}
 
 
-case "$profile" in
+while [ $inCount -gt 0 ]
+do
+    printf "\n%s\n" "====> Next File: $1"
 
-	"gifo")
-		palette="$tempdir/palette.png"
-		p1args="-filter_complex \"[0:v] palettegen\""
-		p2args="-i \"$palette\" -filter_complex \"[0:v][1:v] paletteuse\""
+    [ "$volume" = "max" ] && calcMaxVolume "$1"
 
-		callffmpeg "$decargs" -i "$if" "$p1args" "$encargs" "$palette"
-		callffmpeg "$decargs" -i "$if" "$p2args" "$encargs" "$of"
-	;;
+    if [ -d "$output" ]
+    then
+        outfile="$output/$( basenameWithoutExt "$1" ).$outfileExt"
+        if [ "$(abspath "$1")" = "$(abspath "$outfile")" ]
+        then
+            echo "Input file cannot override itself!" >&2
+            exit 1
+        fi
+    else
+        outfile="$output"
+    fi
+
+    case "$profile" in
+
+		"gifo")
+			tempdir=$(mktemp -d)
+			onexit "rm -r '$tempdir'"
+
+			palette="$tempdir/palette.png"
+			p1args="-filter_complex \"[0:v] palettegen\""
+			p2args="-i \"$palette\" -filter_complex \"[0:v][1:v] paletteuse\""
+
+			filterargs=
+			[ -n "$scarg" ] && filterargs="-filter:v \"$scarg\""
+
+			eval ffmpeg "$decargs" -i "\"$1\"" \
+				"$encargs" "$filterargs" "$p1args" "\"$palette"\"
+
+			eval ffmpeg "$decargs" -i "\"$1\"" \
+				"$encargs" "$filterargs" "$p2args" "\"$outfile"\"
+		;;
 
 
-	*)
-		if [ -n "$twopass" ]
-		then
-			passlog="-passlogfile \"$tempdir\""
-			p1args="-pass 1 $passlog -f null"
-			p2args="-pass 2 $passlog"
+        *)
+            filterargs=
+            [ -n "$volarg" ] && filterargs="-filter:a $volarg"
+			[ -n "$scarg" ] && filterargs="$filterargs  -filter:v \"$scarg\""
 
-			if [ "$twopass" != "1" ]
+			if [ -n "$twopass" ]
 			then
-				p1args="$twopass $p1args"
-			fi
+				tempdir=$(mktemp -d)
+				onexit "rm -r '$tempdir'"
 
-			callffmpeg "$decargs" -an -i "$if" "$encargs" "$p1args" /dev/null
-			callffmpeg "$decargs" -i "$if" "$encargs" "$p2args" "$of"
-		else
-			callffmpeg "$decargs" -i "$if" "$encargs" "$of"
-		fi
-	;;
-esac
+				passlog="-passlogfile \"$tempdir/2pass.log\""
+				p1args="-pass 1 $passlog -f null"
+				p2args="-pass 2 $passlog"
+
+				eval ffmpeg "$decargs" -i "\"$1\"" \
+					"$encargs" "$filterargs" "$p1args" /dev/null
+
+				eval ffmpeg "$decargs" -i "\"$1\"" \
+					"$encargs" "$filterargs" "$p2args" "\"$outfile"\"
+			else
+				eval ffmpeg "$decargs" -i "\"$1\"" \
+					"$encargs $filterargs" "\"$outfile"\"
+			fi
+        ;;
+    esac
+    shift
+    inCount=$(( inCount - 1 ))
+    printf "\n\n"
+done
