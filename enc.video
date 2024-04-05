@@ -44,6 +44,9 @@ the file extension which will be the default extension for the default
 container format of the chosen profile, unless overridden by the \"extension\"
 option.
 
+NOTE:
+Not all codecs can be used in all container formats!
+
 Options:
 
     NOTE:

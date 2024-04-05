@@ -5,10 +5,51 @@
 ```
 Syntax:
 
-    ./enc.video [scale=<w:h|x%|keyword>] [volume=<p%|max>]
-        <profile> <input> <output>
+    ./enc.video [options] <profile> <input_file> <output_file>
 
-    (order of scale and volume is irrelevant)
+    ./enc.video [options] <profile> <input_file> ... <output_directory>
+
+The container format is guessed by the file extension of the output file.
+E.g. ".mp4" generates an MPEG 4 container file, whereas ".webm" would
+generate a WEBM container, and ".mov" would create a MOV container.
+
+NOTE:
+Not all codecs can be used in all container formats!
+
+If output is a directory, the same file name as input will be used, except for
+the file extension which will be the default extension for the default
+container format of the chosen profile, unless overridden by the "extension"
+option.
+
+Options:
+
+    NOTE:
+    Options can be shortened. E.g. "vol" and "volume" are the same option.
+
+    sc[ale]=half|quarter|double|x%|w:h
+
+        half    - Halves the video resolution.
+        quarter - Quarters the video resolution.
+        double  - Doubles the video resolution.
+        x%      - Scales the video by x percent (up or down).
+        w:h     - Scales to width (w) and height (h).
+                  Set either one to -1 and it will be calculated by the other
+                  value to maintain the video aspect ratio.
+
+
+    vol[ume]=<p%|max>
+
+        Volume can either be in percent ("90%"), allowing increasing and
+        decreasing volume by any amount desired (up to the point where the
+        output clips), or it can be "max" in which case the maximum
+        amplication is calculated that is possible without causing any
+        clipping.
+
+
+    ext[ension]=<ext>
+
+        Overrides output file extension in case output is a directory,
+        e.g. "ext=mp3". Has no effect if output is a file name.
 
 
 Valid profile names are:
@@ -37,33 +78,6 @@ Valid profile names are:
     gifo - Animated GIF (or APNG) w/ optimized palette.
 
     transform - Copy audio/video data unmodified, just rewrite container.
-
-
-Scale can either provide both, width (w) and height (h) or only one of both by
-setting the other one to -1 in which case the aspect ratio is kept.
-Alternatively, the following special keyword values are supported:
-
-    half    - Halves the video resolution.
-    quarter - Quarters the video resolution.
-    double  - Doubles the video resolution.
-    x%      - Scales the video by x percent (up or down).
-
-
-Volume can either be in percent, allowing increasing and decreasing volume by
-any amount desired (up to the point where the output clips), or it can be
-"max" in which case the maximum amplication is calculated that is possible
-without causing any clipping.
-
-
-The container format is guessed by the file extension of the output file. E.g.
-".mp4" generates an MPEG 4 container file, whereas ".mkv" would generate a
-Matroska container, and ".webm" a WebM container. Similar using ".apng"
-with the GIF profile creates an animated PNG file. Note that not all codecs can
-be used in all container formats.
-
-If output is a folder, the same file name as input will be used, except for
-the file extension which will be the default extension for the default
-container format of the chosen profile.
 ```
 
 # Help as shown by `enc.audio` Script
