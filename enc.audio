@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -e -u
 
 
 error()
@@ -444,8 +444,11 @@ case "$profile" in
         encargs="$encargs -c:a copy" # Copy audio data
         if [ -z "$outfileExt" ]
         then
-            echo "Profile \"transform\" requires \"extension\" option!" >&2
-            exit 1
+            error "Profile \"transform\" requires \"extension\" option!"
+        fi
+        if [ -n "$volarg" ]
+        then
+            error "Profile \"transform\" does not support \"volume\" option!"
         fi
     ;;
 
@@ -457,8 +460,7 @@ case "$profile" in
 
 
     *)
-        echo "Unknown profile \"$profile\"!" >&1
-        exit 1
+        error "Unknown profile \"$profile\"!"
     ;;
 esac
 
