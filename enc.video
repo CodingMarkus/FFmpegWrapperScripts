@@ -550,7 +550,6 @@ case "$profile" in
 
 	"scrcast")
 		# Video
-		decargs="$decargs -an" # Don't even decode audio
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
@@ -561,14 +560,12 @@ case "$profile" in
 		encargs="$encargs -preset veryslow" # Treat more time for quality
 		# Audio
 		activate_aac 24 mono
-		encargs="$encargs -ar 22050" # Lower sampling rate to 22050 Hz
 		# Other
 		[ -z "$outfileExt" ] && outfileExt="mp4"
 	;;
 
 	"webcast")
 		# Video
-		decargs="$decargs -an" # Don't even decode audio
 		encargs="$encargs -c:v vp9" # VP9 video
 		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
@@ -624,7 +621,7 @@ case "$profile" in
 	"gif")
 		# Video
 		decargs="$decargs -an" # Don't even decode audio
-		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
+		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		# Other
 		[ -z "$outfileExt" ] && outfileExt="gif"
 	;;
@@ -632,7 +629,7 @@ case "$profile" in
 	"gifo")
 		# Video
 		decargs="$decargs -an" # Don't even decode audio
-		encargs="$encargs -fpsmax 15" # Limit FPS to 15 or below
+		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		# Other
 		[ -z "$outfileExt" ] && outfileExt="gif"
 	;;
@@ -756,7 +753,7 @@ do
 				"$encargs" "$filterargs" "$p1args" "\"$palette"\"
 
 			eval ffmpeg "$decargs" -i "\"$1\"" \
-				"$encargs" "$filterargs" "$p2args" "\"$outfile"\"
+				"$p2args" "$encargs" "$filterargs" "\"$outfile"\"
 		;;
 
 
