@@ -63,7 +63,7 @@ Valid profile names are:
 	500k - Limit total bandwidth to 500kbit/s (H.264/AAC).
 	1m   - Limit total bandwidth to 1Mbit/s (H.264/AAC).
 	2m   - Limit total bandwidth to 2Mbit/s (H.264/AAC).
-	3m   - Limit total bandwidth to 2Mbit/s (H.264/AAC).
+	3m   - Limit total bandwidth to 3Mbit/s (H.264/AAC).
 	4m   - Limit total bandwidth to 4Mbit/s (H.264/AAC).
 	6m   - Limit total bandwidth to 6Mbit/s (H.264/AAC).
 	8m   - Limit total bandwidth to 8Mbit/s (H.264/AAC).
@@ -156,7 +156,7 @@ There are three AAC codecs available for FFmpeg:
 The Fraunhofer FDK AAC codec library. This encoder has the highest quality and good speed. Additional to the LC profile also supports the HE and the HEv2 AAC profile for encoding at very low bitrate. Is also supports VBR encoding.
 
 - Audio Toolbox AAC (`aac_at`): \
-This codec uses Apple's AAC library and is only available on macOS systems. The quality is almost identical to the one of the Fraunhofer FDK AAC, maybeslightly worse at very low bitrates, therefor the encoder is lightning fast (up to twice the speed of the Fraunhofer's one). It also supports the LC, the HE and the HEv2 profile, as well as VBR encoding.
+This codec uses Apple's AAC library and is only available on macOS systems. The quality is almost identical to the one of the Fraunhofer FDK AAC, maybe slightly worse at very low bitrates, therefor the encoder is lightning fast (up to twice the speed of the Fraunhofer's one). It also supports the LC, the HE and the HEv2 profile, as well as VBR encoding.
 
 - Native FFmpeg AAC Encoder (`aac`): \
 This is the worst encoder of the three. It's only about half the speed of the Fraunhofer FDK AAC and it's quality is definitely worse, quite noticeable at very low bitrates. Further it only supports the LC profile and while it has a VBR mode, you don't want to use it as it produces worse results than a CBR encoding with even lower bitrate does.
@@ -176,6 +176,8 @@ The `+...` syntax activates variants. Only when installed as shown above you wil
 
 The reason why you should favor MacPorts over other packet manages like Brew (☠️) is that MacPorts isolates itself as much as possible from the rest of the system by putting almost all files under `/opt/local` and installs all binary files and libraries in such a way, that only a process with root access an modify them (they all belong to the `root` user, just like all standard system binaries and libraries that Apple ships with macOS). This also ensures that multiple admin users on a macOS system can all share a single installation of MacPorts without any issues.
 
-Brew on the other hand installs its files to `/usr/local/Cellar` (very bad directory choice), symlinks binaries to `/usr/local/bin` which can cause all kind conflicts with manual installed software and some third party apps, and the files are owned by the user that installed Brew, which has two negative effects: First of all you will run into issues if another admin user tries to use or manage Brew as well on the same system. Yet even worse, this is a huge security problem! 💣 Every app/process that the user runs, who installed Brew, can modify the Brew binaries without requiring root access rights, so it's easy for malware to replace your binaries there with malware code. And now consider that you ever run a Brew binary with `sudo`, as you want to access a file that your user cannot otherwise access? If that binary was replaced by maleware, it just got root access and will take over your entire system!
+Brew on the other hand installs its files to `/usr/local/Cellar` (very bad directory choice), symlinks binaries to `/usr/local/bin` which can cause all kind conflicts with manual installed software and some third party apps, and the files are owned by the user that installed Brew, which has two negative effects:
 
-**Don't use Brew if you care for the security of your system!!!**
+- First of all you will run into issues if another admin user tries to use or manage Brew as well on the same system. They won't have the required access rights to perform certain operations.
+
+- Yet even worse, this is a huge security problem! 💣 Every app/process that the user runs, who installed Brew, can modify the Brew binaries without requiring root access rights, so it's easy for malware to replace your binaries there with malware code. And now consider that you ever run a Brew binary with `sudo`, as you want to access a file that your user cannot otherwise access? If that binary was replaced by malware, it just got root access and will take over your entire system. So don't use Brew if you care for the security of your system!
