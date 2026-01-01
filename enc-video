@@ -89,7 +89,7 @@ Valid profile names are:
 	500k - Limit total bandwidth to 500kbit/s (H.264/AAC).
 	1m   - Limit total bandwidth to 1Mbit/s (H.264/AAC).
 	2m   - Limit total bandwidth to 2Mbit/s (H.264/AAC).
-	3m   - Limit total bandwidth to 2Mbit/s (H.264/AAC).
+	3m   - Limit total bandwidth to 3Mbit/s (H.264/AAC).
 	4m   - Limit total bandwidth to 4Mbit/s (H.264/AAC).
 	6m   - Limit total bandwidth to 6Mbit/s (H.264/AAC).
 	8m   - Limit total bandwidth to 8Mbit/s (H.264/AAC).
@@ -553,7 +553,7 @@ case "$profile" in
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -crf 38" # Encode all frames with same quality
+		encargs="$encargs -crf 36" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -tune animation" # Tune for animated large flat areas
@@ -569,7 +569,7 @@ case "$profile" in
 		encargs="$encargs -c:v vp9" # VP9 video
 		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -crf 56" # Encode all frames with same quality
+		encargs="$encargs -crf 54" # Encode all frames with same quality
 		encargs="$encargs -tune-content screen" # Tune for screen recording
 		encargs="$encargs -cpu-used 0" # Trade speed for quality
 		encargs="$encargs -lag-in-frames 25" # Trade lag for quality
@@ -592,7 +592,7 @@ case "$profile" in
 		encargs="$encargs -c:v h264" # H.264 video
 		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -crf 38" # Encode all frames with same quality
+		encargs="$encargs -crf 36" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
 		encargs="$encargs -level:v 5.2" # Use level 5.2
 		encargs="$encargs -tune animation" # Tune for animated large flat areas
@@ -606,7 +606,7 @@ case "$profile" in
 		encargs="$encargs -c:v vp9" # VP9 video
 		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
-		encargs="$encargs -crf 56" # Encode all frames with same quality
+		encargs="$encargs -crf 54" # Encode all frames with same quality
 		encargs="$encargs -tune-content screen" # Tune for screen recording
 		encargs="$encargs -cpu-used 0" # Trade speed for quality
 		encargs="$encargs -lag-in-frames 25" # Trade lag for quality
