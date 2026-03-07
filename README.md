@@ -159,7 +159,7 @@ The Fraunhofer FDK AAC codec library. This encoder has the highest quality and g
 This codec uses Apple's AAC library and is only available on macOS systems. The quality is almost identical to the one of the Fraunhofer FDK AAC, maybe slightly worse at very low bitrates, therefor the encoder is lightning fast (up to twice the speed of the Fraunhofer's one). It also supports the LC, the HE and the HEv2 profile, as well as VBR encoding.
 
 - Native FFmpeg AAC Encoder (`aac`): \
-This is the worst encoder of the three. It's only about half the speed of the Fraunhofer FDK AAC and it's quality is definitely worse, quite noticeable at very low bitrates. Further it only supports the LC profile and while it has a VBR mode, you don't want to use it as it produces worse results than a CBR encoding with even lower bitrate does.
+This is the worst encoder of the three. It's only about half the speed of the Fraunhofer FDK AAC and its quality is definitely worse, quite noticeable at very low bitrates. Further it only supports the LC profile and while it has a VBR mode, you don't want to use it as it produces worse results than a CBR encoding with even lower bitrate does.
 
 Both scripts support all three encoders and will always favor Audio Toolbox AAC if available, as it offers high quality at very high speed. It will fall back to Fraunhofer FDK AAC if available, as it offers the best quality with still decent speed. Only if it has to, it will use the Native FFmpeg AAC Encoder, because it produces okay results if the bitrate is high enough and no VBR encoding is being used but otherwise cannot be recommended.
 
