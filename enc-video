@@ -362,6 +362,7 @@ case "$profile" in
 	"vlow")
 		# Video
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 34" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
@@ -376,6 +377,7 @@ case "$profile" in
 	"low")
 		# Video
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 28" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
@@ -390,6 +392,7 @@ case "$profile" in
 	"std")
 		# Video
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 24" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
@@ -405,6 +408,7 @@ case "$profile" in
 	"high")
 		# Video
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 21" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
@@ -419,6 +423,7 @@ case "$profile" in
 	"vhigh")
 		# Video
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 18" # Encode all frames with same quality
 		encargs="$encargs -profile:v high" # Use H.264 high profile
@@ -436,6 +441,7 @@ case "$profile" in
 		encargs="$encargs -maxrate 500k" # Set max total bitrate
 		encargs="$encargs -bufsize 3M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -b:v 436k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
@@ -453,6 +459,7 @@ case "$profile" in
 		encargs="$encargs -maxrate 1M" # Set max total bitrate
 		encargs="$encargs -bufsize 2M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -b:v 904k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
@@ -470,6 +477,7 @@ case "$profile" in
 		encargs="$encargs -maxrate 2M" # Set max total bitrate
 		encargs="$encargs -bufsize 2M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -b:v 1872k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
@@ -487,6 +495,7 @@ case "$profile" in
 		encargs="$encargs -maxrate 3M" # Set max total bitrate
 		encargs="$encargs -bufsize 3M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -b:v 2856k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
@@ -504,6 +513,7 @@ case "$profile" in
 		encargs="$encargs -maxrate 4M" # Set max total bitrate
 		encargs="$encargs -bufsize 4M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -b:v 3840k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
@@ -520,6 +530,7 @@ case "$profile" in
 		encargs="$encargs -maxrate 6M" # Set max total bitrate
 		encargs="$encargs -bufsize 4M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -b:v 5808k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
@@ -536,6 +547,7 @@ case "$profile" in
 		encargs="$encargs -maxrate 8M" # Set max total bitrate
 		encargs="$encargs -bufsize 4M" # Set buffer size
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -b:v 7808k" # Set video bitrate
 		encargs="$encargs -profile:v high" # Use H.264 high profile
@@ -551,6 +563,7 @@ case "$profile" in
 	"scrcast")
 		# Video
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 36" # Encode all frames with same quality
@@ -590,6 +603,7 @@ case "$profile" in
 		# Video
 		decargs="$decargs -an" # Don't even decode audio
 		encargs="$encargs -c:v h264" # H.264 video
+		encargs="$encargs -pix_fmt yuv420p" # Keep H.264 high profile valid
 		encargs="$encargs -fpsmax 10" # Limit FPS to 10 or below
 		encargs="$encargs -vsync vfr" # Allow varible frame rate
 		encargs="$encargs -crf 36" # Encode all frames with same quality
