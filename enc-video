@@ -763,10 +763,12 @@ do
 			filterargs=
 			[ -n "$scarg" ] && filterargs="-filter:v \"$scarg\""
 
-			eval ffmpeg "$decargs" -i "\"$1\"" \
+			eval ffmpeg -loglevel warning -stats \
+				"$decargs" -i "\"$1\"" \
 				"$encargs" "$filterargs" "$p1args" "\"$palette"\"
 
-			eval ffmpeg "$decargs" -i "\"$1\"" \
+			eval ffmpeg -loglevel warning -stats \
+				"$decargs" -i "\"$1\"" \
 				"$p2args" "$encargs" "$filterargs" "\"$outfile"\"
 		;;
 
@@ -785,13 +787,16 @@ do
 				p1args="-pass 1 $passlog -f null"
 				p2args="-pass 2 $passlog"
 
-				eval ffmpeg "$decargs" -i "\"$1\"" \
+				eval ffmpeg -loglevel warning -stats \
+					"$decargs" -i "\"$1\"" \
 					"$encargs" "$filterargs" "$p1args" /dev/null
 
-				eval ffmpeg "$decargs" -i "\"$1\"" \
+				eval ffmpeg -loglevel warning -stats \
+					"$decargs" -i "\"$1\"" \
 					"$encargs" "$filterargs" "$p2args" "\"$outfile"\"
 			else
-				eval ffmpeg "$decargs" -i "\"$1\"" \
+				eval ffmpeg -loglevel warning -stats \
+					"$decargs" -i "\"$1\"" \
 					"$encargs $filterargs" "\"$outfile"\"
 			fi
         ;;
